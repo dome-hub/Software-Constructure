@@ -1,0 +1,5 @@
+package Lap72;
+
+public interface Withdrawable {
+	public boolean withdraw(double amount);
+}
