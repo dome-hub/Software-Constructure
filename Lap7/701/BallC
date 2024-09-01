@@ -1,0 +1,14 @@
+package Lap7;
+
+public class BallC extends BallA {
+	public BallC(String treadMark) {
+		super(treadMark);
+		
+	}
+
+	@Override
+	public void inflate(double volumn) {
+		this.volumn=volumn;
+		System.out.println(getTreadMark()+"'s ball is inflated "+this.volumn+" cu.ft");
+	}
+}
