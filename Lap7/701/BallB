@@ -1,0 +1,16 @@
+package Lap7;
+
+public class BallB extends BallA{
+	
+	public BallB(String treadMark) {
+		super(treadMark);
+		// TODO Auto-generated constructor stub
+	}
+
+	@Override
+	public void inflate(double volumn) {
+		this.volumn=volumn;
+		System.out.println(getTreadMark()+"'s ball is inflated "+this.volumn+" cu.ft");
+	}
+	
+}
