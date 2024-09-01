@@ -1,0 +1,60 @@
+package Midterm;
+
+public class Folder {
+	// File f = new File();
+	private File[] file;
+	private Folder[] folder; // ลืมเขียน จบ ระเบิดบึ้ม
+	private String nameFolder;
+	// public int index = 0; //ประกาศผิด ไม่ควรใช้ร่วมกัน มั่ว
+	private int indexFile = 0; // ประกาศแยกของใครของมัน
+	private int indexFolder = 0;
+	private int numFile = 0;
+	private int numFolder = 0;
+
+	public Folder(String name, int f, int Fa) {
+		this.nameFolder = name;
+		this.numFile = f;
+		this.numFolder = Fa;
+		file = new File[numFile];
+		folder = new Folder[numFolder];
+	}
+
+	public boolean Exists(File fi) {
+		for (int i = 0; i < numFile; i++) {
+			if (file[i] != null && fi.getName() != null) {
+				if (fi.getName().equals(file[i].getName()))
+					return false;
+			}
+		}
+		return true;
+	}
+
+	public void addFile(File f) {
+		boolean success = Exists(f);
+		if (success)
+			file[indexFile++] = f;
+	}
+
+	public void addFolder(Folder fd) {
+		folder[indexFolder++] = fd;
+	}
+
+	public void printFolderInfo() {
+		System.out.println(this.nameFolder);
+		for (int j = 0; j < numFile; j++) {
+			if (file[j] != null) {
+				System.out.print("-");
+				file[j].printFileInfo();
+			}
+		}
+		for (int k = 0; k < numFolder; k++) {
+			if(folder[k] != null)
+			System.out.println("+Folder ]" + folder[k].getNameFolder() + "]");
+		}
+		System.out.println();
+	}
+
+	public String getNameFolder() {
+		return nameFolder;
+	}
+}
