@@ -1,0 +1,12 @@
+package Midterm;
+
+public class TestFile {
+		public static void main(String[] args) {
+			File f1 = new File();
+			f1.printFileInfo();
+			File f2 = new File("bbaa");
+			//f2.setName("bb"); f2.setSize(0);f2.setDate("12/1/11/");
+			f2.printFileInfo();
+		}
+	}
+
