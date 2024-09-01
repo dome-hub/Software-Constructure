@@ -1,0 +1,29 @@
+package Lap7;
+
+public class Main {
+	public static void TestBall(Ball b) {
+		System.out.println(b.getTreadMark()+" is a tradeMark of "+b.getClass().getSimpleName());
+		
+	}
+	public static void main(String[] args) {
+		Ball balla = new BallA("Zential"); // เป็นวัตถุของ BallA แต่เป็นชนิดของ Ball
+		Ball ballb = new BallB("Zapphire");
+		Ball ballc = new BallC("Zenith");
+		TestBall(balla);
+		balla.inflate(1.0);
+		((BallA)balla).roll();
+		
+		
+		TestBall(ballb);
+		ballb.inflate(1.1);
+		((BallB)ballb).roll();
+		
+		TestBall(ballc);
+		ballc.inflate(1.2);
+		((BallC)ballc).roll();
+		
+		
+	}
+	
+	
+}
