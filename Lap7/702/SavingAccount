@@ -1,0 +1,34 @@
+package Lap72;
+
+import Lap603.FixedSalary;
+
+public class SavingAccount extends BaseAccount {
+	private Card card;
+	private double balance;
+	
+	public SavingAccount(FixedSalary f) {
+		this.balance = f.getEarn();
+		this.card = new DebitCard(this, "visa", f.getSecurityNumber(), 2.5, f.getEarn());
+		f.setCard((DebitCard)card); //ทำให้ DebitCard ใน Employee เป็น DebitCard เดียวกัน
+	}
+	
+	@Override
+	public boolean deposit(double amount) {
+		if (amount > 0) {
+			balance = balance + amount;
+			return true;
+		}
+		return false;
+
+	}
+
+	@Override
+	public boolean withdraw(double amount) {
+		if(amount>0) {
+			this.balance-=amount;
+			return true;
+		}
+		return false;
+	}
+
+}
