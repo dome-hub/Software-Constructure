@@ -1,0 +1,5 @@
+package Lap7;
+
+public interface Rollable {  
+		public void roll();
+}
