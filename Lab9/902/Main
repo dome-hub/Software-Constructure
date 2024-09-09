@@ -1,0 +1,124 @@
+package Lap902_claude;
+
+import java.util.ArrayList;
+import java.util.List;
+
+class Student {
+	private String name;
+	private String id;
+	private String grade;
+	private List<String> subjects;
+
+	public Student(String name, String id) throws DigitException, SpaceException {
+		setName(name);
+		this.id = id;
+		this.subjects = new ArrayList<>();
+	}
+
+	public void setName(String name) throws DigitException, SpaceException {
+		if (name.matches(".*\\d.*")) {
+			throw new DigitException("digit is not allowed in name");
+		}
+		if (name.contains(" ")) {
+			throw new SpaceException("space is not allowed in name");
+		}
+		this.name = name;
+	}
+
+	public void setGrade(String grade) throws GradeException {
+		if (!grade.matches("[A-F]")) {
+			throw new GradeException("grade must be A B C D E F");
+		}
+		this.grade = grade;
+	}
+
+	public void addSubject(String subject) {
+		subjects.add(subject);
+	}
+
+	public void show() {
+		try {
+			if (grade == null) {
+				throw new IncompleteException("grade I is incomplete");
+			}
+			System.out.println(name + " registered " + subjects.size() + " subjects and got GPA " + calculateGPA());
+		} catch (IncompleteException e) {
+			System.out.println("IncompleteException : " + e.getMessage() + " cannot display.");
+		}
+	}
+
+	private double calculateGPA() {
+		// Simplified GPA calculation, assuming all subjects are 4 credits
+		return 3.0; // Placeholder value
+	}
+}
+
+class DigitException extends Exception {
+	public DigitException(String message) {
+		super(message);
+	}
+}
+
+class SpaceException extends Exception {
+	public SpaceException(String message) {
+		super(message);
+	}
+}
+
+class GradeException extends Exception {
+	public GradeException(String message) {
+		super(message);
+	}
+}
+
+class IncompleteException extends Exception {
+	public IncompleteException(String message) {
+		super(message);
+	}
+}
+
+public class Main {
+	public static void main(String[] args) {
+		try {
+			Student s1 = new Student("Decha", "ABI");
+			s1.show();
+
+			Student s2 = new Student("George1", "ABC");
+			s2.show();
+		} catch (DigitException e) {
+			System.out.println("DigitException : " + e.getMessage() + " cannot display.");
+		} catch (SpaceException e) {
+			System.out.println("SpaceException : " + e.getMessage() + " cannot display.");
+		}
+
+		try {
+			Student s3 = new Student("John Young", "DB");
+			s3.show();
+		} catch (SpaceException e) {
+			System.out.println("SpaceException : " + e.getMessage() + " cannot display.");
+		} catch (DigitException e) {
+			System.out.println("DigitException : " + e.getMessage() + " cannot display.");
+		}
+
+		try {
+			Student s4 = new Student("Ted", "JAB");
+			s4.setGrade("G");
+			s4.show();
+		} catch (GradeException e) {
+			System.out.println("GradeException : " + e.getMessage() + " cannot display.");
+		} catch (DigitException | SpaceException e) {
+			System.out.println(e.getClass().getSimpleName() + " : " + e.getMessage() + " cannot display.");
+		}
+
+		try {
+			Student s5 = new Student("Tony", "CAB");
+			s5.addSubject("Math");
+			s5.addSubject("Science");
+			s5.addSubject("English");
+			s5.setGrade("B");
+			s5.show();
+		} catch (Exception e) {
+			System.out.println(e.getClass().getSimpleName() + " : " + e.getMessage() + " cannot display.");
+		}
+	}
+}
