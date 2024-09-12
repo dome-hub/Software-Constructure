@@ -1,0 +1,166 @@
+package Lab10_1;
+
+import java.awt.event.*;
+import java.text.DecimalFormat;
+import java.awt.*;
+import javax.swing.*;
+import javax.swing.border.Border;
+
+public class Calculator extends JFrame implements ActionListener {
+	JFrame frame;
+	JTextField textfield;
+	JPanel panel;
+	JButton addButton, subButton, mulButton, divButton, delButton, equButton;
+	JButton dotButton, CButton, CEButton, pButton, asButton;
+	JButton[] numButton = new JButton[10];
+	JButton[] operButton = new JButton[12];
+	double num1, num2, result;
+	String tempDot;
+	char operator;
+
+	public Calculator(String title) {
+		frame = new JFrame(title);
+
+		Container c = frame.getContentPane();
+		c.setLayout(new BorderLayout());
+		textfield = new JTextField();
+		textfield.setPreferredSize(new Dimension(400, 50));
+		textfield.setFont(new Font("Arial", Font.PLAIN, 30));
+		c.add(textfield, BorderLayout.NORTH);
+
+		panel = new JPanel();
+		panel.setSize(100, 20);
+		panel.setLayout(new GridLayout(5, 4, 4, 4));
+
+		addButton = new JButton("+");
+		subButton = new JButton("-");
+		mulButton = new JButton("x");
+		divButton = new JButton("/");
+		delButton = new JButton("Del");
+		equButton = new JButton("=");
+		dotButton = new JButton(".");
+		CButton = new JButton("C");
+		CEButton = new JButton("CE");
+		pButton = new JButton("%");
+		asButton = new JButton("+/-");
+
+		// opera label
+		operButton[0] = addButton;
+		operButton[1] = subButton;
+		operButton[2] = mulButton;
+		operButton[3] = divButton;
+		operButton[4] = delButton;
+		operButton[5] = equButton;
+		operButton[6] = dotButton;
+		operButton[7] = CButton;
+		operButton[8] = CEButton;
+		operButton[9] = asButton;
+		operButton[10] = pButton;
+
+		// กำหนดตัวเลขใน array
+		for (int i = 0; i < 10; i++) {
+			numButton[i] = new JButton(String.valueOf(i));
+			numButton[i].setFont(new Font("Arial", Font.PLAIN, 20));
+			numButton[i].addActionListener(this);
+		}
+		for (int k = 0; k < 11; k++) {
+			operButton[k].addActionListener(this);
+			operButton[k].setFont(new Font("Arial", Font.PLAIN, 20));
+		}
+
+		panel.add(pButton);
+		panel.add(CButton);
+		panel.add(divButton);
+		panel.add(delButton);
+
+		panel.add(numButton[7]);
+		panel.add(numButton[8]);
+		panel.add(numButton[9]);
+		panel.add(mulButton);
+		panel.add(numButton[4]);
+		panel.add(numButton[5]);
+		panel.add(numButton[6]);
+		panel.add(subButton);
+		panel.add(numButton[1]);
+		panel.add(numButton[2]);
+		panel.add(numButton[3]);
+		panel.add(addButton);
+		panel.add(asButton);
+		panel.add(numButton[0]);
+		panel.add(dotButton);
+		panel.add(equButton);
+
+		panel.setSize(600, 600);
+		c.add(panel);
+		frame.add(panel);
+
+		frame.setVisible(true);
+		frame.setSize(450, 500);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+
+		DecimalFormat d = new DecimalFormat("#.##");
+		for (int i = 0; i < 10; i++) {
+			if (e.getSource() == numButton[i])
+				textfield.setText(textfield.getText() + String.valueOf(i));
+		}
+		if (e.getSource() == addButton) {
+			num1 = Double.parseDouble(textfield.getText());
+			operator = '+';
+			textfield.setText("");
+		} else if (e.getSource() == subButton) {
+			num1 = Double.parseDouble(textfield.getText());
+			operator = '-';
+			textfield.setText("");
+		} else if (e.getSource() == mulButton) {
+			num1 = Double.parseDouble(textfield.getText());
+			operator = '*';
+			textfield.setText("");
+		} else if (e.getSource() == divButton) {
+			num1 = Double.parseDouble(textfield.getText());
+			operator = '/';
+			textfield.setText("");
+		} else if (e.getSource() == CButton) {
+			textfield.setText("");
+		}else if (e.getSource() == dotButton) {
+			if(!textfield.getText().contains("."))
+			textfield.setText(textfield.getText()+".");
+		//	textfield.setText(textfield.getText().replace(".", ""));
+		}
+
+		else if (e.getSource() == equButton) {
+			num2 = Double.parseDouble(textfield.getText());
+			switch (operator) {
+			case '+':
+				result = num1 + num2;
+				break;
+			case '-':
+				result = num1 - num2;
+				break;
+			case '*':
+				result = num1 * num2;
+				break;
+			case '/':
+				if (num2 == 0) {
+					textfield.setText("Cannot divide by 0");
+					return; // return ใช้เพื่อหยุดการทำงานของฟังก์ชันทั้งหมดถ้าใช้ break ใน switch ฟังก์ชัน actionPerformed จะยังคงทำงานต่อไป
+				} else
+					result = num1 / num2;
+				break;
+			}
+
+			textfield.setText(String.valueOf(d.format(result)));
+
+		}
+
+	}
+
+	public static void main(String[] args) {
+		Calculator c = new Calculator("CALCULATOR");
+
+	}
+}
