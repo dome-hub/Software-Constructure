@@ -14,8 +14,8 @@ public class Calculator extends JFrame implements ActionListener {
 	JButton dotButton, CButton, CEButton, pButton, asButton;
 	JButton[] numButton = new JButton[10];
 	JButton[] operButton = new JButton[12];
-	double num1, num2, result;
-	String tempDot;
+	double num1, num2, result,temp;
+//	String tempDot;
 	char operator;
 
 	public Calculator(String title) {
@@ -103,37 +103,57 @@ public class Calculator extends JFrame implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 
-		DecimalFormat d = new DecimalFormat("#.##");
+		DecimalFormat d = new DecimalFormat("#.##");  //function
+		//DecimalFormat df = new DecimalFormat("#,###");
 		for (int i = 0; i < 10; i++) {
 			if (e.getSource() == numButton[i])
 				textfield.setText(textfield.getText() + String.valueOf(i));
+				//if(textfield.getText().length() > 3) {
+					//double number = Double.parseDouble(textfield.getText());
+					//textfield.setText(String.valueOf(df.format(number)));					
+					//textfield.setText(textfield.getText().replace(",", ""));
+				//}
+				
 		}
 		if (e.getSource() == addButton) {
-			num1 = Double.parseDouble(textfield.getText());
+			temp = Double.parseDouble(textfield.getText());
+			num1 = num1+temp;
 			operator = '+';
 			textfield.setText("");
 		} else if (e.getSource() == subButton) {
-			num1 = Double.parseDouble(textfield.getText());
+			temp = Double.parseDouble(textfield.getText());
+			num1 = num1+temp;
 			operator = '-';
 			textfield.setText("");
 		} else if (e.getSource() == mulButton) {
-			num1 = Double.parseDouble(textfield.getText());
+			temp = Double.parseDouble(textfield.getText());
+			num1 = num1+temp;
 			operator = '*';
 			textfield.setText("");
 		} else if (e.getSource() == divButton) {
-			num1 = Double.parseDouble(textfield.getText());
+			temp = Double.parseDouble(textfield.getText());
+			num1 = num1+temp;
 			operator = '/';
 			textfield.setText("");
 		} else if (e.getSource() == CButton) {
-			textfield.setText("");
+			clear();
 		}else if (e.getSource() == dotButton) {
 			if(!textfield.getText().contains("."))
-			textfield.setText(textfield.getText()+".");
-		//	textfield.setText(textfield.getText().replace(".", ""));
+				textfield.setText(textfield.getText()+".");
+		//	textfield.setText(textfield.getText().replace(".", "")); ทำไมไม่ต้องลบจุดออกกดเอาไปคำนวน
+		}else if(e.getSource() == delButton) {
+			if(textfield.getText().length()>0) {
+				textfield.setText(textfield.getText().substring(0, textfield.getText().length()-1));
+			}
+		}else if (e.getSource() == pButton) {
+			//double pNum = Double.parseDouble(textfield.getText());
+			//textfield.setText(String.valueOf(pNum/100));
+			textfield.setText(String.valueOf(Double.parseDouble(textfield.getText())/100));
 		}
 
 		else if (e.getSource() == equButton) {
 			num2 = Double.parseDouble(textfield.getText());
+			//num1=num2+num1;
 			switch (operator) {
 			case '+':
 				result = num1 + num2;
@@ -152,11 +172,17 @@ public class Calculator extends JFrame implements ActionListener {
 					result = num1 / num2;
 				break;
 			}
-
 			textfield.setText(String.valueOf(d.format(result)));
-
+			num1=0;
 		}
-
+		
+	}
+	public void clear() {
+		textfield.setText("");
+		num1=0;
+		num2=0;
+		temp=0;
+		result=0;
 	}
 
 	public static void main(String[] args) {
