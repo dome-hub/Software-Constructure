@@ -46,7 +46,7 @@ public class Calculator extends JFrame implements ActionListener {
 
 		// opera label
 		operButton[0] = addButton;
-		operButton[1] = subButton;
+		operButton[1]  = subButton;
 		operButton[2] = mulButton;
 		operButton[3] = divButton;
 		operButton[4] = delButton;
@@ -62,6 +62,8 @@ public class Calculator extends JFrame implements ActionListener {
 			numButton[i] = new JButton(String.valueOf(i));
 			numButton[i].setFont(new Font("Arial", Font.PLAIN, 20));
 			numButton[i].addActionListener(this);
+			//numButton[i].setBackground(Color.green);
+
 		}
 		for (int k = 0; k < 11; k++) {
 			operButton[k].addActionListener(this);
@@ -149,11 +151,12 @@ public class Calculator extends JFrame implements ActionListener {
 			//double pNum = Double.parseDouble(textfield.getText());
 			//textfield.setText(String.valueOf(pNum/100));
 			textfield.setText(String.valueOf(Double.parseDouble(textfield.getText())/100));
+		}else if(e.getSource() == asButton) {
+			textfield.setText(String.valueOf(Double.parseDouble(textfield.getText())*-1));//เปลี่ยนข้อความเป็น double เอาdoubleไปคูณ-1แล้วเปลี่ยนกลับเป็น String
 		}
 
 		else if (e.getSource() == equButton) {
 			num2 = Double.parseDouble(textfield.getText());
-			//num1=num2+num1;
 			switch (operator) {
 			case '+':
 				result = num1 + num2;
