@@ -1,0 +1,52 @@
+package Lab12;
+
+import java.util.ArrayList;
+import java.util.Scanner;
+
+public class Item {
+	private String name;
+	private double price;
+	private int quantity;
+	
+	public Item(String name, double price, int quantity) {
+		this.name=name;
+		this.price=price;
+		this.quantity=quantity;
+	}
+
+	public Item() {
+		Scanner input = new Scanner(System.in);
+		ArrayList<Item> cart = new ArrayList<>();
+		
+		while(true) {
+		 System.out.print("Enter the name of the item: ");
+         String name = input.nextLine();
+
+         System.out.print("Enter the unit price: ");
+         double price = Double.parseDouble(input.nextLine());
+
+         System.out.print("Enter the quantity: ");
+         int quantity = Integer.parseInt(input.nextLine());
+         
+         cart.add(new Item(name,price,quantity));
+         
+         System.out.print("Continue Shopping (y/n)? ");
+         
+         if (input.nextLine().toLowerCase().charAt(0) != 'y') 
+             break;           
+		}
+		
+		System.out.println("Final Shopping Cart totals");
+		double total = 0;
+		for(Item i : cart) {
+			double itemTotal = i.price*i.quantity;
+			System.out.println(i.name+"\t $"+i.price+"\t"+i.quantity+"\t"+itemTotal);
+			total+=itemTotal;
+		}
+		System.out.println("Total $ Amount in Cart : $"+total);
+		input.close();
+	}	
+	public static void main(String[] args) {
+		new Item();
+	}
+}
