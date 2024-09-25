@@ -1,0 +1,157 @@
+package ProjectMoney;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+import java.text.*;
+
+public class ExpenseTracker extends JFrame {
+    private DefaultListModel<String> listModel;
+    private JList<String> transactionList;
+    private JRadioButton incomeRadio, expenseRadio;
+    private JTextField amountField, dateField, noteField;
+    private JButton addButton, deleteButton;
+    private JLabel balanceLabel;
+    private double balance = 0.0;
+
+    public ExpenseTracker() {
+        setTitle("Expense Tracker");
+        setSize(600, 400);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        // Create components
+        listModel = new DefaultListModel<>();
+        transactionList = new JList<>(listModel);
+        JScrollPane scrollPane = new JScrollPane(transactionList);
+
+        incomeRadio = new JRadioButton("Income");
+        expenseRadio = new JRadioButton("Outcome");
+        ButtonGroup typeGroup = new ButtonGroup();
+        typeGroup.add(incomeRadio);
+        typeGroup.add(expenseRadio);
+        incomeRadio.setSelected(true);
+
+        amountField = new JTextField(10);
+        dateField = new JTextField(10);
+        noteField = new JTextField(20);
+        addButton = new JButton("Add");
+        deleteButton = new JButton("delete");
+        balanceLabel = new JLabel("Total: 0.00 Baht");
+
+        // Layout
+        setLayout(new BorderLayout());
+        
+        JPanel inputPanel = new JPanel(new GridLayout(6, 2, 5, 5));
+        inputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        inputPanel.add(new JLabel("Type:"));
+        JPanel radioPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        radioPanel.add(incomeRadio);
+        radioPanel.add(expenseRadio);
+        inputPanel.add(radioPanel);
+        inputPanel.add(new JLabel("Amount money:"));
+        inputPanel.add(amountField);
+        inputPanel.add(new JLabel("Date (DD/MM/YYYY):"));
+        inputPanel.add(dateField);
+        inputPanel.add(new JLabel("Note:"));
+        inputPanel.add(noteField);
+        inputPanel.add(addButton);
+        inputPanel.add(deleteButton);
+        inputPanel.add(balanceLabel);
+
+        add(inputPanel, BorderLayout.NORTH);
+        add(scrollPane, BorderLayout.CENTER);
+
+        // Add action listeners
+        addButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                addTransaction();
+            }
+        });
+
+        deleteButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                deleteTransaction();
+            }
+        });
+    }
+
+    private void addTransaction() {
+        String type = incomeRadio.isSelected() ? "Income" : "Outcome";
+        String amount = amountField.getText();
+        String date = dateField.getText();
+        String note = noteField.getText();
+
+        if (!isValidDate(date) || !isValidAmount(amount)) {
+            JOptionPane.showMessageDialog(this, "กรุณากรอกข้อมูลให้ถูกต้อง", "ข้อผิดพลาด", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        double amountValue = Double.parseDouble(amount);
+        if (type.equals("Income")) {
+            balance += amountValue;
+        } else {
+            balance -= amountValue;
+        }
+
+        String transaction = String.format("%s - %s Baht - %s - %s", type, amount, date, note);
+        listModel.addElement(transaction);
+
+        updateBalance();
+
+        // Clear input fields
+        amountField.setText("");
+        dateField.setText("");
+        noteField.setText("");
+    }
+
+    private void deleteTransaction() {
+        int selectedIndex = transactionList.getSelectedIndex();
+        if (selectedIndex != -1) {
+            String transaction = listModel.getElementAt(selectedIndex);
+            String[] parts = transaction.split(" - ");
+            String type = parts[0];
+            double amount = Double.parseDouble(parts[1].replace(" บาท", ""));
+
+            if (type.equals("Income")) {
+                balance -= amount;
+            } else {
+                balance += amount;
+            }
+
+            listModel.remove(selectedIndex);
+            updateBalance();
+        }
+    }
+
+    private void updateBalance() {
+        balanceLabel.setText(String.format("Total: %.2f baht", balance));
+    }
+
+    private boolean isValidDate(String date) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+        dateFormat.setLenient(false);
+        try {
+            dateFormat.parse(date.trim());
+        } catch (ParseException pe) {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean isValidAmount(String amount) {
+        try {
+            Double.parseDouble(amount);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                new ExpenseTracker().setVisible(true);
+            }
+        });
+    }
+}
