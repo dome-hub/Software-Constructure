@@ -1,0 +1,227 @@
+package ProjectMoney;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+import java.text.*;
+import java.io.*;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.*;
+
+public class ExpenseTracker extends JFrame {
+    private DefaultListModel<String> listModel;
+    private JList<String> transactionList;
+    private JRadioButton incomeRadio, expenseRadio;
+    private JTextField amountField, dateField, noteField;
+    private JButton addButton, deleteButton, exportButton;
+    private JLabel balanceLabel;
+    private double balance = 0.0;
+    private ArrayList<Transaction> transactions = new ArrayList<>();
+
+    public ExpenseTracker() {
+        setTitle("Expense Tracker");
+        setSize(600, 400);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        // Create components
+        listModel = new DefaultListModel<>();
+        transactionList = new JList<>(listModel);
+        JScrollPane scrollPane = new JScrollPane(transactionList);
+
+        incomeRadio = new JRadioButton("Income");
+        expenseRadio = new JRadioButton("Outcome");
+        ButtonGroup typeGroup = new ButtonGroup();
+        typeGroup.add(incomeRadio);
+        typeGroup.add(expenseRadio);
+        incomeRadio.setSelected(true);
+
+        amountField = new JTextField(10);
+        dateField = new JTextField(10);
+        noteField = new JTextField(20);
+        addButton = new JButton("Add");
+        deleteButton = new JButton("Delete");
+        exportButton = new JButton("Export to  Excel");
+        balanceLabel = new JLabel("Total: 0.00 baht");
+
+        // Layout
+        setLayout(new BorderLayout());
+        
+        JPanel inputPanel = new JPanel(new GridLayout(7, 2, 5, 5));
+        inputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        inputPanel.add(new JLabel("Type:"));
+        JPanel radioPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        radioPanel.add(incomeRadio);
+        radioPanel.add(expenseRadio);
+        inputPanel.add(radioPanel);
+        inputPanel.add(new JLabel("Amount:"));
+        inputPanel.add(amountField);
+        inputPanel.add(new JLabel("Date (DD/MM/YYYY):"));
+        inputPanel.add(dateField);
+        inputPanel.add(new JLabel("Note:"));
+        inputPanel.add(noteField);
+        inputPanel.add(addButton);
+        inputPanel.add(deleteButton);
+        inputPanel.add(exportButton);
+        inputPanel.add(balanceLabel);
+
+        add(inputPanel, BorderLayout.NORTH);
+        add(scrollPane, BorderLayout.CENTER);
+
+        // Add action listeners
+        addButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                addTransaction();
+            }
+        });
+
+        deleteButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                deleteTransaction();
+            }
+        });
+
+        exportButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                exportToExcel();
+            }
+        });
+    }
+
+    private void addTransaction() {
+        String type = incomeRadio.isSelected() ? "Income" : "Outcome";
+        String amount = amountField.getText();
+        String date = dateField.getText();
+        String note = noteField.getText();
+
+        if (!isValidDate(date) || !isValidAmount(amount)) {
+            JOptionPane.showMessageDialog(this, "กรุณากรอกข้อมูลให้ถูกต้อง", "ข้อผิดพลาด", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        double amountValue = Double.parseDouble(amount);
+        if (type.equals("Income")) {
+            balance += amountValue;
+        } else {
+            balance -= amountValue;
+        }
+
+        Transaction transaction = new Transaction(type, amountValue, date, note);
+        transactions.add(transaction);
+
+        String transactionStr = String.format("%s - %.2f Baht - %s - %s", type, amountValue, date, note);
+        listModel.addElement(transactionStr);
+
+        updateBalance();
+
+        // Clear input fields
+        amountField.setText("");
+        dateField.setText("");
+        noteField.setText("");
+    }
+
+    private void deleteTransaction() {
+        int selectedIndex = transactionList.getSelectedIndex();
+        if (selectedIndex != -1) {
+            Transaction transaction = transactions.get(selectedIndex);
+            if (transaction.getType().equals("Income")) {
+                balance -= transaction.getAmount();
+            } else {
+                balance += transaction.getAmount();
+            }
+
+            transactions.remove(selectedIndex);
+            listModel.remove(selectedIndex);
+            updateBalance();
+        }
+    }
+
+    private void updateBalance() {
+        balanceLabel.setText(String.format("Total: %.2f Baht", balance));
+    }
+
+    private boolean isValidDate(String date) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+        dateFormat.setLenient(false);
+        try {
+            dateFormat.parse(date.trim());
+        } catch (ParseException pe) {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean isValidAmount(String amount) {
+        try {
+            Double.parseDouble(amount);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private void exportToExcel() {
+        try {
+            XSSFWorkbook workbook = new XSSFWorkbook();
+            XSSFSheet sheet = workbook.createSheet("Expense Tracker");
+
+            Row headerRow = sheet.createRow(0);
+            headerRow.createCell(0).setCellValue("Type");
+            headerRow.createCell(1).setCellValue("Amount money");
+            headerRow.createCell(2).setCellValue("Date");
+            headerRow.createCell(3).setCellValue("Note");
+
+            int rowNum = 1;
+            for (Transaction transaction : transactions) {
+                Row row = sheet.createRow(rowNum++);
+                row.createCell(0).setCellValue(transaction.getType());
+                row.createCell(1).setCellValue(transaction.getAmount());
+                row.createCell(2).setCellValue(transaction.getDate());
+                row.createCell(3).setCellValue(transaction.getNote());
+            }
+
+            // Auto-size columns
+            for (int i = 0; i < 4; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            // Write the output to a file
+            String fileName = "ExpenseTracker_" + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()) + ".xlsx";
+            FileOutputStream outputStream = new FileOutputStream(fileName);
+            workbook.write(outputStream);
+            workbook.close();
+            outputStream.close();
+
+            JOptionPane.showMessageDialog(this, "Export Excel Complete: " + fileName, "Complete", JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, "Error Export to Excel", "E", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+
+    private class Transaction {
+        private String type;
+        private double amount;
+        private String date;
+        private String note;
+
+        public Transaction(String type, double amount, String date, String note) {
+            this.type = type;
+            this.amount = amount;
+            this.date = date;
+            this.note = note;
+        }
+
+        public String getType() { return type; }
+        public double getAmount() { return amount; }
+        public String getDate() { return date; }
+        public String getNote() { return note; }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                new ExpenseTracker().setVisible(true);
+            }
+        });
+    }
+}
