@@ -1,0 +1,118 @@
+package ProjectMoney;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+import java.text.*;
+
+public class ExpenseTracker extends JFrame {
+    private DefaultListModel<String> listModel;
+    private JList<String> transactionList;
+    private JComboBox<String> typeCombo;
+    private JTextField dateField, amountField, noteField;
+    private JButton addButton, deleteButton;
+
+    public ExpenseTracker() {
+        setTitle("Expense Tracker");
+        setSize(500, 400);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        // Create components
+        listModel = new DefaultListModel<>();
+        transactionList = new JList<>(listModel);
+        JScrollPane scrollPane = new JScrollPane(transactionList);
+
+        typeCombo = new JComboBox<>(new String[]{"Income", "Outcome"});
+        dateField = new JTextField(10);
+        amountField = new JTextField(10);
+        noteField = new JTextField(20);
+        addButton = new JButton("Add");
+        deleteButton = new JButton("Delete");
+
+        // Layout
+        setLayout(new BorderLayout());
+        
+        JPanel inputPanel = new JPanel(new GridLayout(5, 2));
+        inputPanel.add(new JLabel("Type:"));
+        inputPanel.add(typeCombo);
+        inputPanel.add(new JLabel("Date (DD/MM/YYYY):"));
+        inputPanel.add(dateField);
+        inputPanel.add(new JLabel("Amount:"));
+        inputPanel.add(amountField);
+        inputPanel.add(new JLabel("Note:"));
+        inputPanel.add(noteField);
+        inputPanel.add(addButton);
+        inputPanel.add(deleteButton);
+
+        add(inputPanel, BorderLayout.NORTH);
+        add(scrollPane, BorderLayout.CENTER);
+
+        // Add action listeners
+        addButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                addTransaction();
+            }
+        });
+
+        deleteButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                deleteTransaction();
+            }
+        });
+    }
+
+    private void addTransaction() {
+        String type = (String) typeCombo.getSelectedItem();
+        String date = dateField.getText();
+        String amount = amountField.getText();
+        String note = noteField.getText();
+
+        if (!isValidDate(date) || !isValidAmount(amount)) {
+            JOptionPane.showMessageDialog(this, "Please enter right", "Error na", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String transaction = String.format("%s - %s - %s Baht - %s", type, date, amount, note);
+        listModel.addElement(transaction);
+
+        // Clear input fields
+        dateField.setText("");
+        amountField.setText("");
+        noteField.setText("");
+    }
+
+    private void deleteTransaction() {
+        int selectedIndex = transactionList.getSelectedIndex();
+        if (selectedIndex != -1) {
+            listModel.remove(selectedIndex);
+        }
+    }
+
+    private boolean isValidDate(String date) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+        dateFormat.setLenient(false);
+        try {
+            dateFormat.parse(date.trim());
+        } catch (ParseException pe) {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean isValidAmount(String amount) {
+        try {
+            Double.parseDouble(amount);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                new ExpenseTracker().setVisible(true);
+            }
+        });
+    }
+}
