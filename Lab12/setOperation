@@ -1,0 +1,55 @@
+package Lab1202;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+public class setOperation {
+	
+	public setOperation() {
+		List<Integer>  set1 = new ArrayList<>();
+		List<Integer>  set2 = new ArrayList<>();
+		set1 = Arrays.asList(1,2,3);
+		set2 = Arrays.asList(3,5,7);	
+		System.out.println(PerformOperator(set1,set2,"+"));
+		
+		set1 = Arrays.asList(10,9,8,7);
+		set2 = Arrays.asList(2,4,6,8);
+		System.out.println(PerformOperator(set1,set2,"*"));
+		
+		set1 = Arrays.asList(5,10,15,20);
+		set2 = Arrays.asList(0,10,20);
+		System.out.println(PerformOperator(set1,set2,"-"));
+		
+		
+	}
+	public List<Integer> PerformOperator(List<Integer> set1 , List<Integer>set2 ,String Operator){
+		Set<Integer> setOpe = new HashSet<Integer>();
+		//ใช้ set เพราะเก็บค่าไม่ซ้อนกัน
+		switch (Operator) {
+		case "+":
+			setOpe.addAll(set1);
+			setOpe.addAll(set2); // เพิ่มเข้ามา ที่ไม่ซ้ำเพราเป็น Set
+			break;
+		case "*":
+			setOpe.addAll(set1);
+			setOpe.retainAll(set2); // retainAll = เอาตัวแรกตั้งแล้วเอาแค่ตัวที่เหมือนกัน
+			break;
+		case "-": 
+			setOpe.addAll(set1);  
+			setOpe.removeAll(set2);  //removeAll = เอาอันแรกตั้ง แล้วเอาตังที่เหมือนกันออก
+			break;
+		default:
+			throw new IllegalArgumentException("Unexpected value: " + Operator);
+		}
+		return new ArrayList<>(setOpe);
+		
+	}
+	
+	
+	public static void main(String[] args) {
+		new setOperation();
+	}
+}
