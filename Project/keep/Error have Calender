@@ -1,0 +1,137 @@
+package ProjectMoney;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+import java.text.*;
+import java.io.*;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.*;
+import com.toedter.calendar.JDateChooser; // เพิ่ม import สำหรับ JDateChooser
+
+public class ExpenseTracker extends JFrame {
+    private DefaultListModel<String> listModel;
+    private JList<String> transactionList;
+    private JRadioButton incomeRadio, expenseRadio;
+    private JTextField amountField, noteField;
+    private JDateChooser dateChooser; // เปลี่ยนจาก JTextField เป็น JDateChooser
+    private JButton addButton, deleteButton, exportButton;
+    private JLabel balanceLabel;
+    private double balance = 0.0;
+    private ArrayList<Transaction> transactions = new ArrayList<>();
+
+    public ExpenseTracker() {
+        setTitle("Expense Tracker");
+        setSize(600, 400);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        // Create components
+        listModel = new DefaultListModel<>();
+        transactionList = new JList<>(listModel);
+        JScrollPane scrollPane = new JScrollPane(transactionList);
+
+        incomeRadio = new JRadioButton("Income");
+        expenseRadio = new JRadioButton("Outcome");
+        ButtonGroup typeGroup = new ButtonGroup();
+        typeGroup.add(incomeRadio);
+        typeGroup.add(expenseRadio);
+        incomeRadio.setSelected(true);
+
+        amountField = new JTextField(10);
+        dateChooser = new JDateChooser(); // สร้าง JDateChooser แทน JTextField
+        dateChooser.setDateFormatString("dd/MM/yyyy"); // กำหนดรูปแบบวันที่
+        noteField = new JTextField(20);
+        addButton = new JButton("Add");
+        deleteButton = new JButton("Delete");
+        exportButton = new JButton("Export to Excel");
+        balanceLabel = new JLabel("Total: 0.00 baht");
+
+        // Layout
+        setLayout(new BorderLayout());
+        
+        JPanel inputPanel = new JPanel(new GridLayout(7, 2, 5, 5));
+        inputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        inputPanel.add(new JLabel("Type:"));
+        JPanel radioPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        radioPanel.add(incomeRadio);
+        radioPanel.add(expenseRadio);
+        inputPanel.add(radioPanel);
+        inputPanel.add(new JLabel("Amount:"));
+        inputPanel.add(amountField);
+        inputPanel.add(new JLabel("Date:"));
+        inputPanel.add(dateChooser); // เพิ่ม JDateChooser แทน JTextField
+        inputPanel.add(new JLabel("Note:"));
+        inputPanel.add(noteField);
+        inputPanel.add(addButton);
+        inputPanel.add(deleteButton);
+        inputPanel.add(exportButton);
+        inputPanel.add(balanceLabel);
+
+        add(inputPanel, BorderLayout.NORTH);
+        add(scrollPane, BorderLayout.CENTER);
+
+        // Add action listeners
+        addButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                addTransaction();
+            }
+        });
+
+        deleteButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                deleteTransaction();
+            }
+        });
+
+        exportButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                exportToExcel();
+            }
+        });
+    }
+
+    private void addTransaction() {
+        String type = incomeRadio.isSelected() ? "Income" : "Outcome";
+        String amount = amountField.getText();
+        Date selectedDate = dateChooser.getDate();
+        String note = noteField.getText();
+
+        if (selectedDate == null || !isValidAmount(amount)) {
+            JOptionPane.showMessageDialog(this, "กรุณากรอกข้อมูลให้ถูกต้อง", "ข้อผิดพลาด", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+        String date = dateFormat.format(selectedDate);
+
+        double amountValue = Double.parseDouble(amount);
+        if (type.equals("Income")) {
+            balance += amountValue;
+        } else {
+            balance -= amountValue;
+        }
+
+        Transaction transaction = new Transaction(type, amountValue, date, note);
+        transactions.add(transaction);
+
+        String transactionStr = String.format("%s - %.2f Baht - %s - %s", type, amountValue, date, note);
+        listModel.addElement(transactionStr);
+
+        updateBalance();
+
+        // Clear input fields
+        amountField.setText("");
+        dateChooser.setDate(null);
+        noteField.setText("");
+    }
+
+    // ... (ส่วนที่เหลือของคลาสยังคงเหมือนเดิม)
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                new ExpenseTracker().setVisible(true);
+            }
+        });
+    }
+}
