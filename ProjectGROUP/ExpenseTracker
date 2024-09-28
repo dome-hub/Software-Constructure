@@ -3,7 +3,9 @@ package ProjectMoney;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.*;
 import org.apache.poi.ss.usermodel.*;
@@ -18,7 +20,8 @@ import org.jfree.data.category.*;
 
 public class ExpenseTracker extends JFrame {
 	// private JLabel balanceLabel; // label แสดงเงินคงเหลือ
-	private JButton addButton, deleteButton, exportButton, showChartsButton;
+	private JButton addButton, deleteButton, exportButton;
+	private JButton showMonthlyChartButton, showDailyChartButton;
 	private JTextField amountField, noteField;
 	private JRadioButton incomeRadio, expenseRadio;
 	private JComboBox<String> monthComboBox;
@@ -46,9 +49,14 @@ public class ExpenseTracker extends JFrame {
 		exportButton = new JButton("Export to Excel");
 		exportButton.addActionListener(e -> exportToExcel());
 
-		showChartsButton = new JButton("Show Charts");
-		showChartsButton.addActionListener(e -> showCharts());
-		
+		showMonthlyChartButton = new JButton("Show Monthly Chart");
+		showDailyChartButton = new JButton("Show Daily Chart");
+		// showMonthlyChartButton.addActionListener(e -> showMonthlyChartSelection());
+		 showDailyChartButton.addActionListener(e -> showDailyChartSelection());
+
+		// showChartsButton = new JButton("Show Charts");
+		// showChartsButton.addActionListener(e -> showCharts());
+
 		monthComboBox = new JComboBox<>(months);
 		dateComboBox = new JComboBox<>(date);
 
@@ -99,17 +107,16 @@ public class ExpenseTracker extends JFrame {
 		JScrollPane tableScrollPane = new JScrollPane(transactionTable);
 
 		// อยู่ล่างสุดแสดง Total ยอดเงินคงเหลือ
-		JPanel summaryPanel = new JPanel(new GridLayout(3,2,3,5));
+		JPanel summaryPanel = new JPanel(new GridLayout(3, 2, 3, 5));
 		balanceLabel = new JLabel("Total Amount : ");
 		totalIncomeLabel = new JLabel("Total Income : ");
 		totalExpenseLabel = new JLabel("Total Expense :");
 		summaryPanel.add(balanceLabel);
 		summaryPanel.add(exportButton);
 		summaryPanel.add(totalIncomeLabel);
-		summaryPanel.add(showChartsButton);
+		summaryPanel.add(showDailyChartButton);
 		summaryPanel.add(totalExpenseLabel);
-		
-		
+		summaryPanel.add(showMonthlyChartButton);
 
 		add(inputPanel, BorderLayout.NORTH);
 //        add(addButton, BorderLayout.CENTER);
@@ -168,118 +175,103 @@ public class ExpenseTracker extends JFrame {
 		totalExpenseLabel.setText("Total Expense: " + totalExpense);
 	}
 
-	//เอาข้อมูลที่กรอกเข้า Excel 
+	// เอาข้อมูลที่กรอกเข้า Excel
 	private void exportToExcel() {
-		try {
-			Workbook workbook = new XSSFWorkbook();
-			Sheet sheet = workbook.createSheet("Expense Tracker");
+        try {
+            Workbook workbook;
+            Sheet sheet;
+            int lastRowNum;
+            
+            try {
+                // Try to open existing file
+                FileInputStream fis = new FileInputStream("ExpenseTracker.xlsx");
+                workbook = new XSSFWorkbook(fis);
+                sheet = workbook.getSheetAt(0);
+                lastRowNum = sheet.getLastRowNum();
+                fis.close();
+            } catch (IOException e) {
+                // If file doesn't exist, create new workbook
+                workbook = new XSSFWorkbook();
+                sheet = workbook.createSheet("Expense Tracker");
+                lastRowNum = 0;
+                
+                // Create header row for new file
+                Row headerRow = sheet.createRow(0);
+                for (int i = 0; i < tableModel.getColumnCount(); i++) {
+                    Cell cell = headerRow.createCell(i);
+                    cell.setCellValue(tableModel.getColumnName(i));
+                }
+            }
 
-			// สร้างส่วนหัวของตาราง
-			Row headerRow = sheet.createRow(0);
-			for (int i = 0; i < tableModel.getColumnCount(); i++) {
-				Cell cell = headerRow.createCell(i);
-				cell.setCellValue(tableModel.getColumnName(i));
-			}
+            // Add new data
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
+                Row row = sheet.createRow(lastRowNum + i + 1);
+                for (int j = 0; j < tableModel.getColumnCount(); j++) {
+                    Cell cell = row.createCell(j);
+                    cell.setCellValue(tableModel.getValueAt(i, j).toString());
+                }
+            }
 
-			// เพิ่มข้อมูลจากตารางลงใน Excel
-			for (int i = 0; i < tableModel.getRowCount(); i++) {
-				Row row = sheet.createRow(i + 1);
-				for (int j = 0; j < tableModel.getColumnCount(); j++) {
-					Cell cell = row.createCell(j);
-					cell.setCellValue(tableModel.getValueAt(i, j).toString());
-				}
-			}
+            // Save the file
+            try (FileOutputStream outputStream = new FileOutputStream("ExpenseTracker.xlsx")) {
+                workbook.write(outputStream);
+            }
+            JOptionPane.showMessageDialog(this, "Data exported to ExpenseTracker.xlsx");
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error exporting data: " + ex.getMessage());
+        }
+    }
 
-			// บันทึกไฟล์ Excel
-			try (FileOutputStream outputStream = new FileOutputStream("ExpenseTracker.xlsx")) {
-				workbook.write(outputStream);
-			}
-			JOptionPane.showMessageDialog(this, "Data exported to ExpenseTracker.xlsx");
-		} catch (IOException ex) {
-			ex.printStackTrace();
-			JOptionPane.showMessageDialog(this, "Error exporting data: " + ex.getMessage());
-		}
+	private void showDailyChartSelection() {
+		JFreeChart chart = createDailyChart();
+		showChartInNewWindow(chart, "Daily Expense and Income Chart");
 	}
-	
-	
-	/*private void showCharts() {
-        // สร้างข้อมูลสำหรับแผนภูมิรายเดือน
-        DefaultCategoryDataset monthlyDataset = new DefaultCategoryDataset();
-        Map<String, Double> monthlyExpenses = new HashMap<>();
-        Map<String, Double> monthlyIncomes = new HashMap<>();
 
-        for (int i = 0; i < tableModel.getRowCount(); i++) {
-            String month = tableModel.getValueAt(i, 1).toString();
-            double amount = Double.parseDouble(tableModel.getValueAt(i, 3).toString());
-            String type = tableModel.getValueAt(i, 2).toString();
+	private void showChartInNewWindow(JFreeChart chart, String title) {
+		JFrame chartFrame = new JFrame(title);
+        chartFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        chartFrame.setSize(800, 600);
+        
+        ChartPanel chartPanel = new ChartPanel(chart);
+        chartPanel.setPreferredSize(new Dimension(750, 500));
+        chartFrame.setContentPane(chartPanel);
+        
+        chartFrame.setVisible(true);
+	}
 
-            if (type.equals("Expense")) {
-                monthlyExpenses.put(month, monthlyExpenses.getOrDefault(month, 0.0) + amount);
-            } else {
-                monthlyIncomes.put(month, monthlyIncomes.getOrDefault(month, 0.0) + amount);
-            }
-        }
+	private JFreeChart createDailyChart() {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+		Map<String, Double> dailyExpenses = new HashMap<>();
+		Map<String, Double> dailyIncomes = new HashMap<>();
 
-        for (String month : monthlyExpenses.keySet()) {
-            monthlyDataset.addValue(monthlyExpenses.get(month), "Expenses", month);
-            monthlyDataset.addValue(monthlyIncomes.getOrDefault(month, 0.0), "Incomes", month);
-        }
+		for (int i = 0; i < tableModel.getRowCount(); i++) {
+			String date = tableModel.getValueAt(i, 0).toString() + "/" + tableModel.getValueAt(i, 1).toString();
+			double amount = Double.parseDouble(tableModel.getValueAt(i, 3).toString());
+			String type = tableModel.getValueAt(i, 2).toString();
 
-        // สร้างแผนภูมิรายเดือน
-        JFreeChart monthlyChart = ChartFactory.createBarChart(
-                "Monthly Expenses and Incomes",
-                "Month",
-                "Amount",
-                monthlyDataset,
-                PlotOrientation.VERTICAL,
-                true,
-                true,
-                false
-        );
+			if (type.equals("Expense")) {
+				dailyExpenses.put(date, dailyExpenses.getOrDefault(date, 0.0) + amount);
+			} else {
+				dailyIncomes.put(date, dailyIncomes.getOrDefault(date, 0.0) + amount);
+			}
+		}
 
-        // สร้างข้อมูลสำหรับแผนภูมิรายวัน
-        DefaultCategoryDataset dailyDataset = new DefaultCategoryDataset();
-        Map<String, Double> dailyExpenses = new HashMap<>();
-        Map<String, Double> dailyIncomes = new HashMap<>();
-
-        for (int i = 0; i < tableModel.getRowCount(); i++) {
-            String date = tableModel.getValueAt(i, 0).toString() + "/" + tableModel.getValueAt(i, 1).toString();
-            double amount = Double.parseDouble(tableModel.getValueAt(i, 3).toString());
-            String type = tableModel.getValueAt(i, 2).toString();
-
-            if (type.equals("Expense")) {
-                dailyExpenses.put(date, dailyExpenses.getOrDefault(date, 0.0) + amount);
-            } else {
-                dailyIncomes.put(date, dailyIncomes.getOrDefault(date, 0.0) + amount);
-            }
-        }
-
-        for (String date : dailyExpenses.keySet()) {
-            dailyDataset.addValue(dailyExpenses.get(date), "Expenses", date);
-            dailyDataset.addValue(dailyIncomes.getOrDefault(date, 0.0), "Incomes", date);
-        }
-
-        // สร้างแผนภูมิรายวัน
-        JFreeChart dailyChart = ChartFactory.createBarChart(
+		for (String date : dailyExpenses.keySet()) {
+			dataset.addValue(dailyExpenses.get(date), "Expenses", date);
+			dataset.addValue(dailyIncomes.getOrDefault(date, 0.0), "Incomes", date);
+		}
+		return ChartFactory.createBarChart(
                 "Daily Expenses and Incomes",
                 "Date",
                 "Amount",
-                dailyDataset,
+                dataset,
                 PlotOrientation.VERTICAL,
                 true,
                 true,
                 false
-        );
-
-        // แสดงแผนภูมิในหน้าต่างใหม่
-        JFrame chartsFrame = new JFrame("Expense Charts");
-        chartsFrame.setLayout(new GridLayout(2, 1));
-        chartsFrame.add(new ChartPanel(monthlyChart));
-        chartsFrame.add(new ChartPanel(dailyChart));
-        chartsFrame.pack();
-        chartsFrame.setVisible(true);
-    }
-	*/
+        );   
+	}
 
 	public static void main(String[] args) {
 		new ExpenseTracker().setVisible(true);
