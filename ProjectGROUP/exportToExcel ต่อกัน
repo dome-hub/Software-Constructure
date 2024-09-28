@@ -1,0 +1,46 @@
+private void exportToExcel() {
+        try {
+            Workbook workbook;
+            Sheet sheet;
+            int lastRowNum;
+            
+            try {
+                // Try to open existing file
+                FileInputStream fis = new FileInputStream("ExpenseTracker.xlsx");
+                workbook = new XSSFWorkbook(fis);
+                sheet = workbook.getSheetAt(0);
+                lastRowNum = sheet.getLastRowNum();
+                fis.close();
+            } catch (IOException e) {
+                // If file doesn't exist, create new workbook
+                workbook = new XSSFWorkbook();
+                sheet = workbook.createSheet("Expense Tracker");
+                lastRowNum = 0;
+                
+                // Create header row for new file
+                Row headerRow = sheet.createRow(0);
+                for (int i = 0; i < tableModel.getColumnCount(); i++) {
+                    Cell cell = headerRow.createCell(i);
+                    cell.setCellValue(tableModel.getColumnName(i));
+                }
+            }
+
+            // Add new data
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
+                Row row = sheet.createRow(lastRowNum + i + 1);
+                for (int j = 0; j < tableModel.getColumnCount(); j++) {
+                    Cell cell = row.createCell(j);
+                    cell.setCellValue(tableModel.getValueAt(i, j).toString());
+                }
+            }
+
+            // Save the file
+            try (FileOutputStream outputStream = new FileOutputStream("ExpenseTracker.xlsx")) {
+                workbook.write(outputStream);
+            }
+            JOptionPane.showMessageDialog(this, "Data exported to ExpenseTracker.xlsx");
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error exporting data: " + ex.getMessage());
+        }
+    }
