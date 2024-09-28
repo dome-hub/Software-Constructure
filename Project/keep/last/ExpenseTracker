@@ -63,12 +63,19 @@ public class ExpenseTracker extends JFrame {
 		inputPanel.add(addButton);
 		inputPanel.add(deleteButton);
 
+		//addbutton
 		addButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				addTransaction(); // ไปทำงานเพิ่มลงในตาราง
 			}
 		});
+		//deleteButton
+		deleteButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                deleteTransaction();
+            }
+        });
 
 		// column แสดงตาราง
 		String[] columnNames = { "date", "Month", "type", "Money", "Note" };
@@ -107,6 +114,18 @@ public class ExpenseTracker extends JFrame {
 			System.out.println(e);
 		}
 	}
+	public void deleteTransaction() {
+	    int selectedIndex = transactionTable.getSelectedRow(); // ดึงแถวที่ถูกเลือกในตาราง
+
+	    if (selectedIndex != -1) { // ตรวจสอบว่ามีแถวที่ถูกเลือกหรือไม่
+	        tableModel.removeRow(selectedIndex); // ลบแถวที่ถูกเลือกจาก tableModel
+	        updateSummary(); // อัพเดตยอดเงินคงเหลือ
+	    } else {
+	    	//System.out.println(e);
+	        JOptionPane.showMessageDialog(this, "Please select a transaction to delete.", "No Selection", JOptionPane.WARNING_MESSAGE);
+	    }
+	}
+
 
 	public void updateSummary() {
 		// double balance=0;
@@ -125,6 +144,8 @@ public class ExpenseTracker extends JFrame {
 		}
 		double balance = totalIncome - totalExpense;
 		balanceLabel.setText("Total Amount : " + balance);
+		totalIncomeLabel.setText("Total Income: " + totalIncome);
+		totalExpenseLabel.setText("Total Expense: " + totalExpense);
 	}
 
 	public static void main(String[] args) {
