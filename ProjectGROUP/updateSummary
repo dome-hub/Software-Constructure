@@ -1,0 +1,20 @@
+public void updateSummary() {
+		// double balance=0;
+		double totalIncome = 0;
+		double totalExpense = 0;
+
+		for (int i = 0; i < tableModel.getRowCount(); i++) {
+			String type = (String) tableModel.getValueAt(i, 2);
+			double amount = (double) tableModel.getValueAt(i, 3);
+
+			if (type.equals("Income")) {
+				totalIncome += amount;
+			} else if (type.equals("Expense")) {
+				totalExpense += amount;
+			}
+		}
+		double balance = totalIncome - totalExpense;
+		balanceLabel.setText("Total Amount : " + balance);
+		totalIncomeLabel.setText("Total Income: " + totalIncome);
+		totalExpenseLabel.setText("Total Expense: " + totalExpense);
+	}
