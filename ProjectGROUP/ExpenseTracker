@@ -3,6 +3,7 @@ package ProjectMoney;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -20,7 +21,7 @@ import org.jfree.data.category.*;
 
 public class ExpenseTracker extends JFrame {
 	// private JLabel balanceLabel; // label แสดงเงินคงเหลือ
-	private JButton addButton, deleteButton, exportButton;
+	private JButton addButton, deleteButton, exportButton, deleteFromExcelButton;
 	private JButton showMonthlyChartButton, showDailyChartButton;
 	private JTextField amountField, noteField;
 	private JRadioButton incomeRadio, expenseRadio;
@@ -48,11 +49,12 @@ public class ExpenseTracker extends JFrame {
 
 		exportButton = new JButton("Export to Excel");
 		exportButton.addActionListener(e -> exportToExcel());
-
+		deleteFromExcelButton = new JButton("Delete from Excel");
+		deleteFromExcelButton.addActionListener(e -> deleteFromExcel());
 		showMonthlyChartButton = new JButton("Show Monthly Chart");
 		showDailyChartButton = new JButton("Show Daily Chart");
 		// showMonthlyChartButton.addActionListener(e -> showMonthlyChartSelection());
-		 showDailyChartButton.addActionListener(e -> showDailyChartSelection());
+		showDailyChartButton.addActionListener(e -> showDailyChartSelection());
 
 		// showChartsButton = new JButton("Show Charts");
 		// showChartsButton.addActionListener(e -> showCharts());
@@ -107,16 +109,18 @@ public class ExpenseTracker extends JFrame {
 		JScrollPane tableScrollPane = new JScrollPane(transactionTable);
 
 		// อยู่ล่างสุดแสดง Total ยอดเงินคงเหลือ
-		JPanel summaryPanel = new JPanel(new GridLayout(3, 2, 3, 5));
+		JPanel summaryPanel = new JPanel(new GridLayout(3, 3, 3, 5));
 		balanceLabel = new JLabel("Total Amount : ");
 		totalIncomeLabel = new JLabel("Total Income : ");
 		totalExpenseLabel = new JLabel("Total Expense :");
 		summaryPanel.add(balanceLabel);
 		summaryPanel.add(exportButton);
+		summaryPanel.add(deleteFromExcelButton);
 		summaryPanel.add(totalIncomeLabel);
 		summaryPanel.add(showDailyChartButton);
-		summaryPanel.add(totalExpenseLabel);
 		summaryPanel.add(showMonthlyChartButton);
+		summaryPanel.add(totalExpenseLabel);
+		
 
 		add(inputPanel, BorderLayout.NORTH);
 //        add(addButton, BorderLayout.CENTER);
@@ -177,51 +181,90 @@ public class ExpenseTracker extends JFrame {
 
 	// เอาข้อมูลที่กรอกเข้า Excel
 	private void exportToExcel() {
-        try {
-            Workbook workbook;
-            Sheet sheet;
-            int lastRowNum;
-            
-            try {
-                // Try to open existing file
-                FileInputStream fis = new FileInputStream("ExpenseTracker.xlsx");
-                workbook = new XSSFWorkbook(fis);
-                sheet = workbook.getSheetAt(0);
-                lastRowNum = sheet.getLastRowNum();
-                fis.close();
-            } catch (IOException e) {
-                // If file doesn't exist, create new workbook
-                workbook = new XSSFWorkbook();
-                sheet = workbook.createSheet("Expense Tracker");
-                lastRowNum = 0;
-                
-                // Create header row for new file
-                Row headerRow = sheet.createRow(0);
-                for (int i = 0; i < tableModel.getColumnCount(); i++) {
-                    Cell cell = headerRow.createCell(i);
-                    cell.setCellValue(tableModel.getColumnName(i));
-                }
-            }
+		try {
+			Workbook workbook;
+			Sheet sheet;
+			int lastRowNum;
 
-            // Add new data
-            for (int i = 0; i < tableModel.getRowCount(); i++) {
-                Row row = sheet.createRow(lastRowNum + i + 1);
-                for (int j = 0; j < tableModel.getColumnCount(); j++) {
-                    Cell cell = row.createCell(j);
-                    cell.setCellValue(tableModel.getValueAt(i, j).toString());
-                }
-            }
+			try {
+				// Try to open existing file
+				FileInputStream fis = new FileInputStream("ExpenseTracker.xlsx");
+				workbook = new XSSFWorkbook(fis);
+				sheet = workbook.getSheetAt(0);
+				lastRowNum = sheet.getLastRowNum();
+				fis.close();
+			} catch (IOException e) {
+				// If file doesn't exist, create new workbook
+				workbook = new XSSFWorkbook();
+				sheet = workbook.createSheet("Expense Tracker");
+				lastRowNum = 0;
 
-            // Save the file
-            try (FileOutputStream outputStream = new FileOutputStream("ExpenseTracker.xlsx")) {
-                workbook.write(outputStream);
-            }
-            JOptionPane.showMessageDialog(this, "Data exported to ExpenseTracker.xlsx");
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error exporting data: " + ex.getMessage());
-        }
-    }
+				// Create header row for new file
+				Row headerRow = sheet.createRow(0);
+				for (int i = 0; i < tableModel.getColumnCount(); i++) {
+					Cell cell = headerRow.createCell(i);
+					cell.setCellValue(tableModel.getColumnName(i));
+				}
+			}
+
+			// Add new data
+			for (int i = 0; i < tableModel.getRowCount(); i++) {
+				Row row = sheet.createRow(lastRowNum + i + 1);
+				for (int j = 0; j < tableModel.getColumnCount(); j++) {
+					Cell cell = row.createCell(j);
+					cell.setCellValue(tableModel.getValueAt(i, j).toString());
+				}
+			}
+
+			// Save the file
+			try (FileOutputStream outputStream = new FileOutputStream("ExpenseTracker.xlsx")) {
+				workbook.write(outputStream);
+			}
+			JOptionPane.showMessageDialog(this, "Data exported to ExpenseTracker.xlsx");
+		} catch (IOException ex) {
+			ex.printStackTrace();
+			JOptionPane.showMessageDialog(this, "Error exporting data: " + ex.getMessage());
+		}
+	}
+
+	
+	//ลบข้อมูลใน Excel ระบุแถว
+	public void deleteFromExcel() {
+		try {
+			File file = new File("ExpenseTracker.xlsx");
+			if (!file.exists()) {
+				JOptionPane.showMessageDialog(this, "Excel file does not exist.", "Error", JOptionPane.ERROR_MESSAGE);
+				return;
+			}
+
+			FileInputStream fis = new FileInputStream(file);
+			Workbook workbook = new XSSFWorkbook(fis);
+			Sheet sheet = workbook.getSheetAt(0);
+
+			int rowToDelete = Integer
+					.parseInt(JOptionPane.showInputDialog(this, "Enter the row number to delete (1-based):"));
+			if (rowToDelete <= 1 || rowToDelete > sheet.getLastRowNum() + 1) {
+				JOptionPane.showMessageDialog(this, "Invalid row number.", "Error", JOptionPane.ERROR_MESSAGE);
+				return;
+			}
+
+			sheet.removeRow(sheet.getRow(rowToDelete - 1));
+			if (rowToDelete < sheet.getLastRowNum()) {
+				sheet.shiftRows(rowToDelete, sheet.getLastRowNum(), -1);
+			}
+
+			FileOutputStream fos = new FileOutputStream(file);
+			workbook.write(fos);
+			fos.close();
+			workbook.close();
+
+			JOptionPane.showMessageDialog(this, "Row deleted successfully from Excel.");
+		} catch (IOException | NumberFormatException ex) {
+			ex.printStackTrace();
+			JOptionPane.showMessageDialog(this, "Error deleting data: " + ex.getMessage(), "Error",
+					JOptionPane.ERROR_MESSAGE);
+		}
+	}
 
 	private void showDailyChartSelection() {
 		JFreeChart chart = createDailyChart();
@@ -230,14 +273,14 @@ public class ExpenseTracker extends JFrame {
 
 	private void showChartInNewWindow(JFreeChart chart, String title) {
 		JFrame chartFrame = new JFrame(title);
-        chartFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        chartFrame.setSize(800, 600);
-        
-        ChartPanel chartPanel = new ChartPanel(chart);
-        chartPanel.setPreferredSize(new Dimension(750, 500));
-        chartFrame.setContentPane(chartPanel);
-        
-        chartFrame.setVisible(true);
+		chartFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		chartFrame.setSize(800, 600);
+
+		ChartPanel chartPanel = new ChartPanel(chart);
+		chartPanel.setPreferredSize(new Dimension(750, 500));
+		chartFrame.setContentPane(chartPanel);
+
+		chartFrame.setVisible(true);
 	}
 
 	private JFreeChart createDailyChart() {
@@ -261,16 +304,8 @@ public class ExpenseTracker extends JFrame {
 			dataset.addValue(dailyExpenses.get(date), "Expenses", date);
 			dataset.addValue(dailyIncomes.getOrDefault(date, 0.0), "Incomes", date);
 		}
-		return ChartFactory.createBarChart(
-                "Daily Expenses and Incomes",
-                "Date",
-                "Amount",
-                dataset,
-                PlotOrientation.VERTICAL,
-                true,
-                true,
-                false
-        );   
+		return ChartFactory.createBarChart("Daily Expenses and Incomes", "Date", "Amount", dataset,
+				PlotOrientation.VERTICAL, true, true, false);
 	}
 
 	public static void main(String[] args) {
