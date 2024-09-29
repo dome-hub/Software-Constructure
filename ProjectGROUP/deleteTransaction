@@ -1,0 +1,12 @@
+public void deleteTransaction() {
+		int selectedIndex = transactionTable.getSelectedRow(); // ดึงแถวที่ถูกเลือกในตาราง
+
+		if (selectedIndex != -1) { // ตรวจสอบว่ามีแถวที่ถูกเลือกหรือไม่
+			tableModel.removeRow(selectedIndex); // ลบแถวที่ถูกเลือกจาก tableModel
+			updateSummary(); // อัพเดตยอดเงินคงเหลือ
+		} else {
+			// System.out.println(e);
+			JOptionPane.showMessageDialog(this, "Please select a transaction to delete.", "No Selection",
+					JOptionPane.WARNING_MESSAGE);
+		}
+	}
