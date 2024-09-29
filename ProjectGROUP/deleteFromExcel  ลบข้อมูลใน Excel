@@ -1,0 +1,37 @@
+//ลบข้อมูลใน Excel ระบุแถว
+	public void deleteFromExcel() {
+		try {
+			File file = new File("ExpenseTracker.xlsx");
+			if (!file.exists()) {
+				JOptionPane.showMessageDialog(this, "Excel file does not exist.", "Error", JOptionPane.ERROR_MESSAGE);
+				return;
+			}
+
+			FileInputStream fis = new FileInputStream(file);
+			Workbook workbook = new XSSFWorkbook(fis);
+			Sheet sheet = workbook.getSheetAt(0);
+
+			int rowToDelete = Integer
+					.parseInt(JOptionPane.showInputDialog(this, "Enter the row number to delete (1-based):"));
+			if (rowToDelete <= 1 || rowToDelete > sheet.getLastRowNum() + 1) {
+				JOptionPane.showMessageDialog(this, "Invalid row number.", "Error", JOptionPane.ERROR_MESSAGE);
+				return;
+			}
+
+			sheet.removeRow(sheet.getRow(rowToDelete - 1));
+			if (rowToDelete < sheet.getLastRowNum()) {
+				sheet.shiftRows(rowToDelete, sheet.getLastRowNum(), -1);
+			}
+
+			FileOutputStream fos = new FileOutputStream(file);
+			workbook.write(fos);
+			fos.close();
+			workbook.close();
+
+			JOptionPane.showMessageDialog(this, "Row deleted successfully from Excel.");
+		} catch (IOException | NumberFormatException ex) {
+			ex.printStackTrace();
+			JOptionPane.showMessageDialog(this, "Error deleting data: " + ex.getMessage(), "Error",
+					JOptionPane.ERROR_MESSAGE);
+		}
+	}
