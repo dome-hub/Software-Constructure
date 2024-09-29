@@ -1,0 +1,83 @@
+public void deleteFromExcel() {
+    try {
+        File file = new File("ExpenseTracker.xlsx");
+        if (!file.exists()) {
+            JOptionPane.showMessageDialog(this, "Excel file does not exist.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        FileInputStream fis = new FileInputStream(file);
+        Workbook workbook = new XSSFWorkbook(fis);
+        Sheet sheet = workbook.getSheetAt(0);
+
+        String input = JOptionPane.showInputDialog(this, "Enter row numbers to delete (e.g., 1-10, or 2,5,8):");
+
+        if (input == null || input.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No rows selected.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int[] rowsToDelete = parseRowInput(input, sheet.getLastRowNum() + 1);
+        if (rowsToDelete.length == 0) {
+            JOptionPane.showMessageDialog(this, "No valid rows to delete.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // ลบแถวจากแถวที่มีหมายเลขมากที่สุดก่อน เพื่อป้องกันการเลื่อน index
+        Arrays.sort(rowsToDelete);
+        for (int i = rowsToDelete.length - 1; i >= 0; i--) {
+            int rowToDelete = rowsToDelete[i];
+            sheet.removeRow(sheet.getRow(rowToDelete - 1));
+            if (rowToDelete <= sheet.getLastRowNum()) {
+                sheet.shiftRows(rowToDelete, sheet.getLastRowNum(), -1);
+            }
+        }
+
+        FileOutputStream fos = new FileOutputStream(file);
+        workbook.write(fos);
+        fos.close();
+        workbook.close();
+
+        JOptionPane.showMessageDialog(this, "Rows deleted successfully from Excel.");
+    } catch (IOException | NumberFormatException ex) {
+        ex.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error deleting data: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    }
+}
+
+// ฟังก์ชันสำหรับแปลงข้อความจากผู้ใช้ให้เป็นอาร์เรย์ของหมายเลขแถว
+private int[] parseRowInput(String input, int maxRow) {
+    String[] parts = input.split(",");
+    int[] rows = new int[parts.length * 2]; // ขนาดเริ่มต้นคำนวณคร่าวๆ เผื่อช่วง
+    int index = 0;
+
+    for (String part : parts) {
+        part = part.trim();
+        if (part.contains("-")) {
+            // ลบแถวเป็นช่วง เช่น 1-10
+            String[] range = part.split("-");
+            if (range.length == 2) {
+                try {
+                    int start = Integer.parseInt(range[0].trim());
+                    int end = Integer.parseInt(range[1].trim());
+                    for (int i = start; i <= end; i++) {
+                        if (i > 0 && i <= maxRow) {
+                            rows[index++] = i;
+                        }
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        } else {
+            // ลบแถวที่ป้อนมาแยกกัน เช่น 2,5,8
+            try {
+                int row = Integer.parseInt(part);
+                if (row > 0 && row <= maxRow) {
+                    rows[index++] = row;
+                }
+            } catch (NumberFormatException ignored) {
+            }
+        }
+    }
+    return Arrays.copyOf(rows, index); // ตัดส่วนที่ไม่ได้ใช้ของอาร์เรย์ออก
+}
