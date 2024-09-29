@@ -1,0 +1,15 @@
+public void addTransaction() {
+		try {
+			String date = (String) dateComboBox.getSelectedItem();
+			String month = (String) monthComboBox.getSelectedItem();
+			double amount = Double.parseDouble(amountField.getText());
+			String note = noteField.getText();
+			String type = incomeRadio.isSelected() ? "Income" : "Expense"; // เช็คว่ากดปุ่มไหน
+
+			tableModel.addRow(new Object[] { date, month, type, amount, note });
+
+			updateSummary(); // ไป Update เงินคงเหลือ
+		} catch (Exception e) {
+			System.out.println(e);
+		}
+	}
