@@ -2,6 +2,7 @@ package ProjectMoney;
 
 import java.awt.*;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -70,7 +71,10 @@ public class ExpenseTracker extends JFrame {
 		incomeRadio.setSelected(true);
 
 		amountField = new JTextField();
+		amountField.setFont(new Font("Tahoma", Font.PLAIN, 15)); //set font
 		noteField = new JTextField();
+		noteField.setFont(new Font("Tahoma", Font.PLAIN, 15)); //set font
+		
 
 		inputPanel.add(new JLabel("Month:"));
 		inputPanel.add(monthComboBox);
@@ -182,34 +186,34 @@ public class ExpenseTracker extends JFrame {
 	// เอาข้อมูลที่กรอกเข้า Excel
 	private void exportToExcel() {
 		try {
-			Workbook workbook;
-			Sheet sheet;
-			int lastRowNum;
+			Workbook workbook; //ใช้เก็บข้อมูลไฟล์ Excel 
+			Sheet sheet;//ใช้เก็บข้อมูลไฟล์ Sheet
+			int lastRowNum; //ใช้เก็บหมายเลขของแถวสุดท้ายในชีท
 
 			try {
-				// Try to open existing file
-				FileInputStream fis = new FileInputStream("ExpenseTracker.xlsx");
-				workbook = new XSSFWorkbook(fis);
-				sheet = workbook.getSheetAt(0);
-				lastRowNum = sheet.getLastRowNum();
-				fis.close();
+				// เปิดไฟล์ Excel ที่มีอยู่แล้ว
+				FileInputStream fis = new FileInputStream("ExpenseTracker.xlsx");// เปิดไฟล์ Excel ถ้าไม่มีจะไป Catch
+				workbook = new XSSFWorkbook(fis);//สร้างอินสแตนซ์ของ XSSFWorkbook โดยใช้ข้อมูลจาก FileInputStream (ไฟล์ Excel)
+				sheet = workbook.getSheetAt(0);//ใช้ getSheetAt(0) เพื่อดึงชีทแรกจาก workbook มาเก็บไว้ในตัวแปร sheet ซึ่งจะเป็นชีทที่เราจะเพิ่มข้อมูลใหม่เข้าไป
+				lastRowNum = sheet.getLastRowNum();//ดึงค่า หมายเลขของแถวสุดท้าย
+				fis.close(); //ปิด FileInputStream
 			} catch (IOException e) {
-				// If file doesn't exist, create new workbook
-				workbook = new XSSFWorkbook();
-				sheet = workbook.createSheet("Expense Tracker");
-				lastRowNum = 0;
+				// ถ้าไม่มีไฟล์อยู่แล้ว สร้างworkbookใหม่
+				workbook = new XSSFWorkbook();//สร้าง XSSFWorkbook ใหม่ จากศูนย์
+				sheet = workbook.createSheet("Expense Tracker");//สร้างชีสใหม่ ชื่อ"Expense Tracker" ใน workbook
+				lastRowNum = 0;// ตัวเลขที่เพิ่มจะเป็น0
 
-				// Create header row for new file
-				Row headerRow = sheet.createRow(0);
+				// สร้างหัวข้อ (Header) ในกรณีที่เป็นไฟล์ใหม่
+				Row headerRow = sheet.createRow(0);//สร้างแถวใหม่ในชีทที่ตำแหน่งแถวที่ 0 
 				for (int i = 0; i < tableModel.getColumnCount(); i++) {
-					Cell cell = headerRow.createCell(i);
-					cell.setCellValue(tableModel.getColumnName(i));
+					Cell cell = headerRow.createCell(i);//สร้างเซลล์ (Cell) ในแถวหัวข้อที่ตำแหน่งคอลัมน์ที่ i
+					cell.setCellValue(tableModel.getColumnName(i));//กำหนดค่าหัวข้อของแต่ละเซลล์ให้เป็นชื่อของคอลัมน์ใน JTable 
 				}
 			}
 
-			// Add new data
-			for (int i = 0; i < tableModel.getRowCount(); i++) {
-				Row row = sheet.createRow(lastRowNum + i + 1);
+			// เพิ่มข้อมูลจาก JTable ลงใน Excel
+			for (int i = 0; i < tableModel.getRowCount(); i++) {//วนลูปจำนวนรอบตามจำนวนแถวใน tableModel (JTable) ที่มีข้อมูล
+				Row row = sheet.createRow(lastRowNum + i + 1); //สร้างแถวใหม่ในชีท Excel
 				for (int j = 0; j < tableModel.getColumnCount(); j++) {
 					Cell cell = row.createCell(j);
 					cell.setCellValue(tableModel.getValueAt(i, j).toString());
