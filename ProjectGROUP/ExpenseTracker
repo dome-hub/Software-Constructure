@@ -225,6 +225,10 @@ public class ExpenseTracker extends JFrame {
 			ex.printStackTrace();
 			JOptionPane.showMessageDialog(this, "Error exporting data: " + ex.getMessage());
 		}
+		
+		//clear Jtable
+		tableModel.setRowCount(0);
+		updateSummary();
 	}
 
 	
@@ -317,7 +321,7 @@ public class ExpenseTracker extends JFrame {
 	        }
 
 	        JFreeChart chart = ChartFactory.createBarChart(
-	            "สรุปรายรับ-จ่าย 6 เดือน",
+	            "สรุปรายรับ-จ่าย 12 เดือน",
 	            "เดือน",
 	            "จำนวนเงิน",
 	            dataset,
@@ -330,7 +334,7 @@ public class ExpenseTracker extends JFrame {
 	        CategoryPlot plot = (CategoryPlot) chart.getPlot();
 	        BarRenderer renderer = (BarRenderer) plot.getRenderer();
 	        renderer.setSeriesPaint(0, Color.GREEN);
-	        renderer.setSeriesPaint(1, Color.ORANGE);
+	        renderer.setSeriesPaint(1, Color.RED);
 
 	        ChartFrame frame = new ChartFrame("Monthly Income and Expense Chart", chart);
 	        frame.pack();
