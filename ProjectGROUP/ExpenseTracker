@@ -1,6 +1,7 @@
 package ProjectMoney;
 
 import java.awt.*;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -17,6 +18,7 @@ import java.util.*;
 
 import org.jfree.chart.*;
 import org.jfree.chart.plot.*;
+import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.data.category.*;
 
 public class ExpenseTracker extends JFrame {
@@ -53,11 +55,9 @@ public class ExpenseTracker extends JFrame {
 		deleteFromExcelButton.addActionListener(e -> deleteFromExcel());
 		showMonthlyChartButton = new JButton("Show Monthly Chart");
 		showDailyChartButton = new JButton("Show Daily Chart");
-		// showMonthlyChartButton.addActionListener(e -> showMonthlyChartSelection());
-		//showDailyChartButton.addActionListener(e -> showDailyChartSelection());
-
-		// showChartsButton = new JButton("Show Charts");
-		// showChartsButton.addActionListener(e -> showCharts());
+		
+		showMonthlyChartButton.addActionListener(e -> showMonthlyChart());
+       // showDailyChartButton.addActionListener(e -> showDailyChart());
 
 		monthComboBox = new JComboBox<>(months);
 		dateComboBox = new JComboBox<>(date);
@@ -103,7 +103,7 @@ public class ExpenseTracker extends JFrame {
 		});
 
 		// column แสดงตาราง
-		String[] columnNames = { "date", "Month", "type", "Money", "Note" };
+		String[] columnNames = { "Date", "Month", "Type", "Money", "Note" };
 		tableModel = new DefaultTableModel(columnNames, 0);
 		transactionTable = new JTable(tableModel);
 		JScrollPane tableScrollPane = new JScrollPane(transactionTable);
@@ -265,19 +265,83 @@ public class ExpenseTracker extends JFrame {
 					JOptionPane.ERROR_MESSAGE);
 		}
 	}
+	
+	
+	//Chart MOnth
+	private void showMonthlyChart() {
+	    try {
+	        FileInputStream fis = new FileInputStream("ExpenseTracker.xlsx");
+	        Workbook workbook = new XSSFWorkbook(fis);
+	        Sheet sheet = workbook.getSheetAt(0);
 
+	        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+	        Map<String, Double> incomeByMonth = new HashMap<>();
+	        Map<String, Double> expenseByMonth = new HashMap<>();
 
+	        for (Row row : sheet) {
+	            if (row.getRowNum() == 0) continue; // Skip header
+	            Cell monthCell = row.getCell(1);
+	            Cell typeCell = row.getCell(2);
+	            Cell amountCell = row.getCell(3);
 
-	private void showChartInNewWindow(JFreeChart chart, String title) {
-		JFrame chartFrame = new JFrame(title);
-		chartFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		chartFrame.setSize(800, 600);
+	            if (monthCell == null || typeCell == null || amountCell == null) continue;
 
-		ChartPanel chartPanel = new ChartPanel(chart);
-		chartPanel.setPreferredSize(new Dimension(750, 500));
-		chartFrame.setContentPane(chartPanel);
+	            String month = monthCell.getStringCellValue();
+	            String type = typeCell.getStringCellValue();
+	            double amount;
 
-		chartFrame.setVisible(true);
+	            if (amountCell.getCellType() == CellType.NUMERIC) {
+	                amount = amountCell.getNumericCellValue();
+	            } else if (amountCell.getCellType() == CellType.STRING) {
+	                try {
+	                    amount = Double.parseDouble(amountCell.getStringCellValue());
+	                } catch (NumberFormatException e) {
+	                    System.out.println("Invalid amount in row " + row.getRowNum() + ": " + amountCell.getStringCellValue());
+	                    continue;
+	                }
+	            } else {
+	                System.out.println("Unexpected cell type in row " + row.getRowNum());
+	                continue;
+	            }
+
+	            if (type.equals("Income")) {
+	                incomeByMonth.put(month, incomeByMonth.getOrDefault(month, 0.0) + amount);
+	            } else if (type.equals("Expense")) {
+	                expenseByMonth.put(month, expenseByMonth.getOrDefault(month, 0.0) + amount);
+	            }
+	        }
+
+	        for (String month : incomeByMonth.keySet()) {
+	            dataset.addValue(incomeByMonth.get(month), "รายรับ", month);
+	            dataset.addValue(expenseByMonth.getOrDefault(month, 0.0), "รายจ่าย", month);
+	        }
+
+	        JFreeChart chart = ChartFactory.createBarChart(
+	            "สรุปรายรับ-จ่าย 6 เดือน",
+	            "เดือน",
+	            "จำนวนเงิน",
+	            dataset,
+	            PlotOrientation.VERTICAL,
+	            true,
+	            true,
+	            false
+	        );
+
+	        CategoryPlot plot = (CategoryPlot) chart.getPlot();
+	        BarRenderer renderer = (BarRenderer) plot.getRenderer();
+	        renderer.setSeriesPaint(0, Color.GREEN);
+	        renderer.setSeriesPaint(1, Color.ORANGE);
+
+	        ChartFrame frame = new ChartFrame("Monthly Income and Expense Chart", chart);
+	        frame.pack();
+	        frame.setVisible(true);
+
+	        workbook.close();
+	        fis.close();
+	    } catch (IOException ex) {
+	        ex.printStackTrace();
+	        JOptionPane.showMessageDialog(this, "Error reading Excel file: " + ex.getMessage());
+	    }
 	}
 
 	
