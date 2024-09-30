@@ -54,7 +54,7 @@ public class ExpenseTracker extends JFrame {
 		showMonthlyChartButton = new JButton("Show Monthly Chart");
 		showDailyChartButton = new JButton("Show Daily Chart");
 		// showMonthlyChartButton.addActionListener(e -> showMonthlyChartSelection());
-		showDailyChartButton.addActionListener(e -> showDailyChartSelection());
+		//showDailyChartButton.addActionListener(e -> showDailyChartSelection());
 
 		// showChartsButton = new JButton("Show Charts");
 		// showChartsButton.addActionListener(e -> showCharts());
@@ -245,7 +245,7 @@ public class ExpenseTracker extends JFrame {
 					.parseInt(JOptionPane.showInputDialog(this, "Enter the row number to delete (1-based):"));
 			if (rowToDelete <= 1 || rowToDelete > sheet.getLastRowNum() + 1) {
 				JOptionPane.showMessageDialog(this, "Invalid row number.", "Error", JOptionPane.ERROR_MESSAGE);
-				return;
+				//return;
 			}
 
 			sheet.removeRow(sheet.getRow(rowToDelete - 1));
@@ -266,10 +266,7 @@ public class ExpenseTracker extends JFrame {
 		}
 	}
 
-	private void showDailyChartSelection() {
-		JFreeChart chart = createDailyChart();
-		showChartInNewWindow(chart, "Daily Expense and Income Chart");
-	}
+
 
 	private void showChartInNewWindow(JFreeChart chart, String title) {
 		JFrame chartFrame = new JFrame(title);
@@ -283,30 +280,7 @@ public class ExpenseTracker extends JFrame {
 		chartFrame.setVisible(true);
 	}
 
-	private JFreeChart createDailyChart() {
-		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-		Map<String, Double> dailyExpenses = new HashMap<>();
-		Map<String, Double> dailyIncomes = new HashMap<>();
-
-		for (int i = 0; i < tableModel.getRowCount(); i++) {
-			String date = tableModel.getValueAt(i, 0).toString() + "/" + tableModel.getValueAt(i, 1).toString();
-			double amount = Double.parseDouble(tableModel.getValueAt(i, 3).toString());
-			String type = tableModel.getValueAt(i, 2).toString();
-
-			if (type.equals("Expense")) {
-				dailyExpenses.put(date, dailyExpenses.getOrDefault(date, 0.0) + amount);
-			} else {
-				dailyIncomes.put(date, dailyIncomes.getOrDefault(date, 0.0) + amount);
-			}
-		}
-
-		for (String date : dailyExpenses.keySet()) {
-			dataset.addValue(dailyExpenses.get(date), "Expenses", date);
-			dataset.addValue(dailyIncomes.getOrDefault(date, 0.0), "Incomes", date);
-		}
-		return ChartFactory.createBarChart("Daily Expenses and Incomes", "Date", "Amount", dataset,
-				PlotOrientation.VERTICAL, true, true, false);
-	}
+	
 
 	public static void main(String[] args) {
 		new ExpenseTracker().setVisible(true);
