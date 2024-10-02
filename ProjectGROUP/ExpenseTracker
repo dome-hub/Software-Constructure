@@ -278,17 +278,16 @@ public class ExpenseTracker extends JFrame {
 	//Chart MOnth
 	private void showMonthlyChart() {
 	    try {
-	        FileInputStream fis = new FileInputStream("ExpenseTracker.xlsx");
-	        Workbook workbook = new XSSFWorkbook(fis);
-	        Sheet sheet = workbook.getSheetAt(0);
+	        FileInputStream fis = new FileInputStream("ExpenseTracker.xlsx"); // อ่านไฟล์ ชื่อExpenseTracker.xlsx
+	        Workbook workbook = new XSSFWorkbook(fis);//Workbook เป็นอ็อบเจ็กต์ที่ใช้จัดการกับไฟล์ Excel โดยใช้ XSSFWorkbook 
+	        Sheet sheet = workbook.getSheetAt(0);//เลือกแผ่นงานแรก (sheet) จากไฟล์ Excel 
 
-	        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+	        DefaultCategoryDataset dataset = new DefaultCategoryDataset();// ใช้เก็บข้อมูลที่จะแสดงในกราฟ
 //	        Map<String, Double> incomeByMonth = new HashMap<>();
 //	        Map<String, Double> expenseByMonth = new HashMap<>();
-	        Map<String, Double> incomeByMonth = new TreeMap<>(new MonthComparator());
-	        Map<String, Double> expenseByMonth = new TreeMap<>(new MonthComparator());
-
-	        for (Row row : sheet) {
+	        Map<String, Double> incomeByMonth = new TreeMap<>(new MonthComparator());//เก็บข้อมูลแบบเรียง
+	        Map<String, Double> expenseByMonth = new TreeMap<>(new MonthComparator());//เก็บข้อมูลแบบเรียง
+	        for (Row row : sheet) {//วนลูปอ่านข้อมูลแต่ละแถว
 	            if (row.getRowNum() == 0) continue; // Skip header
 	            Cell monthCell = row.getCell(1);
 	            Cell typeCell = row.getCell(2);
