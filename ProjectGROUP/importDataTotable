@@ -1,0 +1,51 @@
+public void importDataTotable() {
+        try {
+            FileInputStream fis = new FileInputStream("ExpenseTracker22.xlsx");
+            Workbook workbook = new XSSFWorkbook(fis);
+            Sheet sheet = workbook.getSheetAt(0);
+            
+            // ล้างข้อมูลเดิมใน table
+            tableModel.setRowCount(0);
+
+            // เริ่มจากแถวที่ 1 เพื่อข้ามส่วนหัว
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                Row row = sheet.getRow(i);
+                if (row != null) {
+                    Object[] rowData = new Object[5];
+                    for (int j = 0; j < 5; j++) {
+                        Cell cell = row.getCell(j);
+                        if (cell != null) {
+                            switch (cell.getCellType()) {
+                                case STRING:
+                                    String cellValue = cell.getStringCellValue();
+                                    // แปลงเป็น UTF-8 สำหรับภาษาไทย
+                                    rowData[j] = new String(cellValue.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+                                    break;
+                                case NUMERIC:
+                                    if (j == 3) { // สมมติว่าคอลัมน์ที่ 4 (index 3) เป็นเงิน
+                                        rowData[j] = cell.getNumericCellValue();
+                                    } else {
+                                        rowData[j] = String.valueOf((int) cell.getNumericCellValue());
+                                    }
+                                    break;
+                                default:
+                                    rowData[j] = "";
+                            }
+                        } else {
+                            rowData[j] = "";
+                        }
+                    }
+                    tableModel.addRow(rowData);
+                }
+            }
+
+            workbook.close();
+            fis.close();
+
+            updateSummary();
+            JOptionPane.showMessageDialog(this, "นำเข้าข้อมูลสำเร็จ!");
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, "เกิดข้อผิดพลาดในการนำเข้าข้อมูล: " + e.getMessage());
+            e.printStackTrace(); // เพิ่มการพิมพ์ stack trace เพื่อการดีบัก
+        }
+    }
