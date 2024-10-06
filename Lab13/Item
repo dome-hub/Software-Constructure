@@ -1,0 +1,110 @@
+package Lab13;
+
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.util.ArrayList;
+import java.util.Scanner;
+
+public class Item {
+	private String name;
+	private double price;
+	private int quantity;
+
+	public Item(String name, double price, int quantity) {
+		this.name = name;
+		this.price = price;
+		this.quantity = quantity;
+	}
+	public String getName() {
+		return name;
+	}
+	public double getPrice() {
+		return price;
+	}
+	public int getQuantity() {
+		return quantity;
+	}
+	public Item() {
+		Scanner input = new Scanner(System.in);
+		ArrayList<Item> cart = new ArrayList<>();
+
+		while (true) {
+			System.out.print("Enter the name of the item: ");
+			String name = input.nextLine();
+
+			System.out.print("Enter the unit price: ");
+			double price = Double.parseDouble(input.nextLine());
+
+			System.out.print("Enter the quantity: ");
+			int quantity = Integer.parseInt(input.nextLine());
+
+			cart.add(new Item(name, price, quantity));
+
+			System.out.print("Continue Shopping (y/n)? ");
+
+			if (input.nextLine().toLowerCase().charAt(0) != 'y')
+				break;
+		}
+
+		System.out.println("Final Shopping Cart totals");
+		double total = 0;
+		for (Item i : cart) {
+			double itemTotal = i.price * i.quantity;
+			System.out.println(i.name + "\t $" + i.price + "\t" + i.quantity + "\t" + itemTotal);
+			total += itemTotal;
+		}
+		System.out.println("Total $ Amount in Cart : $" + total);
+
+		//true = เขียนต่อ
+		try (FileWriter fw = new FileWriter("sell.txt", true)) {
+			for (Item i : cart) {
+				fw.write(i.name + "," + i.price + "," + i.quantity + "\n");
+			}
+
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		
+		System.out.print("Enter name of item you want to Search(enter e to Exit) :");
+		String searchName = input.nextLine().trim();
+		
+		if(!searchName.equalsIgnoreCase("e")) {
+			try(BufferedReader br = new BufferedReader(new FileReader("sell.txt"))) {
+				String line;
+				double totalPrice = 0;
+				int totalQuantity=0;
+				boolean check = false;
+				while((line = br.readLine()) != null) {
+					String[] itemA = line.split(",");
+					if(itemA[0].equalsIgnoreCase(searchName)) {
+						double price = Double.parseDouble(itemA[1]);
+						int quantity = Integer.parseInt(itemA[2]);
+						totalPrice = totalPrice+quantity*price;
+						totalQuantity+=quantity;
+						check = true;
+					}				
+				}
+				if(check) {
+					System.out.println("Your item is : "+searchName);
+					System.out.println("Total Quantity is :"+totalQuantity);
+					System.out.println("Total price is :"+totalPrice);
+				}else System.out.println("Item name not found !! ");
+				
+				
+			} catch (Exception e) {
+				// TODO: handle exception
+			}
+		}
+		System.out.println("Exit successful ");
+		
+		input.close();
+	}
+
+	public static void main(String[] args) {
+		new Item();
+	}
+}
