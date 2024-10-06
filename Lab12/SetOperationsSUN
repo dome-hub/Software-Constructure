@@ -1,0 +1,80 @@
+package Lab1202;
+
+import java.util.*;
+
+import java.util.HashSet;
+import java.util.Scanner;
+import java.util.Set;
+
+public class SetOperations {
+	public static void main(String[] args) {
+		Scanner scan = new Scanner(System.in);
+
+		System.out.println("Enter operation in format number ");
+		String input = scan.nextLine();
+
+		String[] parts = input.split("([\\[\\]]+\\s*[\\+\\*\\-]\\s*[\\[\\]])");
+
+		if (parts.length != 2) {
+			System.out.println("Invalid input format.");
+			scan.close();
+			return;
+		}
+
+		String operation = input.replaceAll("[^\\+\\*\\-]", "").trim();
+
+		Set<Integer> set1 = parseInput(parts[0]);
+		Set<Integer> set2 = parseInput(parts[1]);
+
+		Set<Integer> result = new HashSet<>();
+
+		switch (operation) {
+		case "+":
+			result = union(set1, set2);
+			break;
+		case "*":
+			result = intersection(set1, set2);
+			break;
+		case "-":
+			result = difference(set1, set2);
+			break;
+		default:
+			System.out.println("Invalid operation.");
+			System.exit(0);
+		}
+
+		System.out.println("Result is: " + result);
+		scan.close();
+	}
+
+	public static Set<Integer> union(Set<Integer> set1, Set<Integer> set2) {
+		Set<Integer> result = new HashSet<>(set1);
+		result.addAll(set2);
+		return result;
+	}
+
+	public static Set<Integer> intersection(Set<Integer> set1, Set<Integer> set2) {
+		Set<Integer> result = new HashSet<>(set1);
+		result.retainAll(set2);
+		return result;
+	}
+
+	public static Set<Integer> difference(Set<Integer> set1, Set<Integer> set2) {
+		Set<Integer> result = new HashSet<>(set1);
+		result.removeAll(set2);
+		return result;
+	}
+
+	public static Set<Integer> parseInput(String input) {
+		Set<Integer> set = new HashSet<>();
+		input = input.replaceAll("[\\[\\]]", "").trim();
+		String[] parts = input.split(",");
+		for (String part : parts) {
+			set.add(Integer.parseInt(part.trim()));
+		}
+		return set;
+	}
+}
+//[1,2,3]+[3,5,7]
+//[10,9,8,7]*[2,4,6,8]
+//[5,10,15,20]-[0,10,20]
