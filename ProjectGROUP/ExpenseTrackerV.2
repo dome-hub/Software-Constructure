@@ -134,10 +134,11 @@ public class ExpenseTracker extends JFrame {
 		String date = (String) dateComboBox.getSelectedItem();
 		String month = (String) monthComboBox.getSelectedItem();
 		String type = expenseRadio.isSelected() ? "Expense" : "Income";
-		if (amountField.getText().matches("\\d+(\\.\\d+)?")) // Checks if the text consists of digits only
+		// Checks if the text consists of digits only
+		if (amountField.getText().matches("\\d+(\\.\\d+)?")&& Double.parseDouble(amountField.getText()) !=0) 
 			money = Double.parseDouble(amountField.getText());
 		else {
-			JOptionPane.showMessageDialog(this, "Number Only !!");
+			JOptionPane.showMessageDialog(this, "Digit Only , Can't input 0");
 			return;
 		}
 		String note = noteField.getText();
