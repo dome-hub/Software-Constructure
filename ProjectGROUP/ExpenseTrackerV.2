@@ -26,8 +26,6 @@ import org.jfree.chart.plot.*;
 import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.data.category.*;
 
-
-
 public class ExpenseTracker extends JFrame {
 	// private JLabel balanceLabel; // label แสดงเงินคงเหลือ
 	private JButton addButton, deleteButton, exportButton, importData;
@@ -134,7 +132,7 @@ public class ExpenseTracker extends JFrame {
 		String date = (String) dateComboBox.getSelectedItem();
 		String month = (String) monthComboBox.getSelectedItem();
 		String type = expenseRadio.isSelected() ? "Expense" : "Income";
-		// Checks if the text consists of digits only
+		// Checks if the text consists of digits only and not 0
 		if (amountField.getText().matches("\\d+(\\.\\d+)?")&& Double.parseDouble(amountField.getText()) !=0) 
 			money = Double.parseDouble(amountField.getText());
 		else {
@@ -214,53 +212,52 @@ public class ExpenseTracker extends JFrame {
 		}
 	
 	public void importDataTotable() {
-	    try (FileInputStream fis = new FileInputStream("ExpenseTracker22.xlsx"); // เปิดไฟล์ excel เพื่ออ่านข้อมูล
-	         Workbook workbook = new XSSFWorkbook(fis)) { //
+	    try (FileInputStream fis = new FileInputStream("ExpenseTracker22.xlsx");
+	         Workbook workbook = new XSSFWorkbook(fis)) {
 	        
-	        Sheet sheet = workbook.getSheetAt(0); // ดึงชีทแรก
-	        tableModel.setRowCount(0); // ล้างข้อมูลในตารางก่อน
+	        Sheet sheet = workbook.getSheetAt(0);
+	        tableModel.setRowCount(0);
 
-	        ArrayList<Vector<Object>> data = new ArrayList<>(); // ใช้ ArrayList เก็บข้อมูลชั่วคราวเพื่อให้เรียงได้
+	        ArrayList<Vector<Object>> data = new ArrayList<>();
 
-	        for (int i = 1; i <= sheet.getLastRowNum(); i++) { // ข้ามแถวหัวข้อ
+	        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
 	            Row row = sheet.getRow(i);
 	            Vector<Object> rowData = new Vector<>();
-	            for (int j = 0; j < row.getLastCellNum(); j++) {
-	                Cell cell = row.getCell(j);
-	                //ตรวจสอบและแปลงประเภทข้อมูลของเซลล์
-	                switch (cell.getCellType()) {
-	                    case STRING: 
-	                        rowData.add(cell.getStringCellValue());
-	                        break;
-	                    case NUMERIC: 
-	                        if (DateUtil.isCellDateFormatted(cell)) {
-	                            rowData.add(cell.getDateCellValue()); // ถ้าเป็นวันที่
-	                        } else {
-	                            rowData.add(cell.getNumericCellValue()); // ถ้าเป็นตัวเลขธรรมดา
-	                        }
-	                        break;
-	                    case BOOLEAN:
-	                        rowData.add(cell.getBooleanCellValue());
-	                        break;
-	                }
+	            
+	            // Date
+	            rowData.add(row.getCell(0).getStringCellValue());
+	            
+	            // Month
+	            rowData.add(row.getCell(1).getStringCellValue());
+	            
+	            // Type
+	            rowData.add(row.getCell(2).getStringCellValue());
+	            
+	            // Money - แน่ใจว่าเป็น Double
+	            Cell moneyCell = row.getCell(3);
+	            if (moneyCell.getCellType() == CellType.NUMERIC) {
+	                rowData.add(moneyCell.getNumericCellValue());
+	            } else {
+	                rowData.add(Double.parseDouble(moneyCell.getStringCellValue()));
 	            }
-	            data.add(rowData); // เพิ่มข้อมูลลงใน List
+	            
+	            // Note
+	            rowData.add(row.getCell(4).getStringCellValue());
+	            
+	            data.add(rowData);
 	        }
 
 	        // เรียงข้อมูลตามเดือนและวันที่
 	        Collections.sort(data, new Comparator<Vector<Object>>() {
 	            @Override
 	            public int compare(Vector<Object> o1, Vector<Object> o2) {
-	                // เปรียบเทียบเดือนก่อน     //ฟังก์ชัน getMonthIndex เพื่อแปลงชื่อเดือนเป็นตัวเลข
 	                int monthComparison = Integer.compare(getMonthIndex((String) o1.get(1)), getMonthIndex((String) o2.get(1)));
 	                if (monthComparison != 0) {
 	                    return monthComparison;
 	                }
-	                // ถ้าเดือนเท่ากัน ให้เปรียบเทียบวันที่
-	                int day1 = Integer.parseInt((String) o1.get(0)); // วันที่ใน o1
-	                int day2 = Integer.parseInt((String) o2.get(0)); // วันที่ใน o2
+	                int day1 = Integer.parseInt((String) o1.get(0));
+	                int day2 = Integer.parseInt((String) o2.get(0));
 	                return Integer.compare(day1, day2);
-	                
 	            }
 	        });
 
@@ -268,12 +265,17 @@ public class ExpenseTracker extends JFrame {
 	        for (Vector<Object> rowData : data) {
 	            tableModel.addRow(rowData);
 	        }
-	        //แสดงข้อความแจ้งเตือนเมื่อข้อมูลถูกนำเข้าเรียบร้อย
-	        JOptionPane.showMessageDialog(this, "Data Imported and Sorted Successfully!");
-	    } catch (IOException e) { //หากมีข้อผิดพลาดในการนำเข้าข้อมูลจะแจ้งเตือน
+
+	        // อัปเดตสรุปและ UI
+	        SwingUtilities.invokeLater(() -> {
+	            updateSummary();
+	            repaint(); // เพิ่มการ repaint เพื่อให้แน่ใจว่า UI จะอัปเดต
+	        });
+	        
+	        JOptionPane.showMessageDialog(this, "Data Imported, Sorted, and Summary Updated Successfully!");
+	    } catch (IOException e) {
 	        JOptionPane.showMessageDialog(this, "Error importing data: " + e.getMessage());
 	    }
-	    
 	}
 
 	public void showMonthlyChart() {
