@@ -29,7 +29,7 @@ import org.jfree.chart.plot.*;
 import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.data.category.*;
 
-public class ExpenseTracker extends JFrame {
+public class TestExpenseTracker extends JFrame {
 	// private JLabel balanceLabel; // label แสดงเงินคงเหลือ
 	private JButton addButton, deleteButton, exportButton, importData;
 	private JButton showMonthlyChartButton;
@@ -40,12 +40,12 @@ public class ExpenseTracker extends JFrame {
 	private DefaultTableModel tableModel;
 	private JTable transactionTable;
 	private JLabel totalIncomeLabel, totalExpenseLabel, balanceLabel;
-
+	private JComboBox<String> categoryComboBox;
 	private double balance = 0.0;
 
-	public ExpenseTracker() {
+	public TestExpenseTracker() {
 		setTitle("Expense Tracker");
-		setSize(600, 400);
+		setSize(800, 600);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setLocationRelativeTo(null);
 		
@@ -55,7 +55,7 @@ public class ExpenseTracker extends JFrame {
 		//setIconImage(new ImageIcon("ExpenseIcon.png").getImage());
 		
 		setLayout(new BorderLayout());
-		JPanel inputPanel = new JPanel(new GridLayout(3, 3, 5, 5));
+		JPanel inputPanel = new JPanel(new GridLayout(4, 3, 5, 5));
 
 		String[] months = { "January", "February", "March", "April", "May", "June", "July", "August", "September",
 				"October", "November", "December" };
@@ -64,6 +64,12 @@ public class ExpenseTracker extends JFrame {
 		monthComboBox = new JComboBox<String>(months);
 		dateComboBox = new JComboBox<String>(date);
 
+		String[] incomeCategories = {" ","Bonus","Parents","Salary","Other"};
+		String[] expenseCategories = {" ","Food","Beverage","Travel","accommodation","Other"};
+		
+		categoryComboBox = new JComboBox<String>(expenseCategories);
+		
+		
 		// radio
 		incomeRadio = new JRadioButton("Income");
 		expenseRadio = new JRadioButton("Expense");
@@ -80,7 +86,7 @@ public class ExpenseTracker extends JFrame {
 		noteField = new JTextField();
 		noteField.setFont(new Font("Tahoma", Font.PLAIN, 15)); // set font
 
-		String[] columnNames = { "Date", "Month", "Type", "Money", "Note" };
+		String[] columnNames = { "Date", "Month", "Type","Category", "Money", "Note" };
 		tableModel = new DefaultTableModel(columnNames, 0); // 0 คือตัวเลขที่ระบุจำนวนแถวเริ่มต้น
 		transactionTable = new JTable(tableModel);
 		JScrollPane table = new JScrollPane(transactionTable);
@@ -102,6 +108,7 @@ public class ExpenseTracker extends JFrame {
 		summaryPanel.add(totalExpenseLabel);
 		summaryPanel.add(showMonthlyChartButton);
 
+		
 		inputPanel.add(new JLabel("Month:"));
 		inputPanel.add(monthComboBox);
 		inputPanel.add(new JLabel("Date"));
@@ -110,10 +117,13 @@ public class ExpenseTracker extends JFrame {
 		inputPanel.add(amountField);
 		inputPanel.add(new JLabel("Note"));
 		inputPanel.add(noteField);
-		inputPanel.add(incomeRadio);
-		inputPanel.add(expenseRadio);
+		inputPanel.add(new JLabel("Catogory : "));	
+		inputPanel.add(categoryComboBox);
 		inputPanel.add(addButton);
 		inputPanel.add(deleteButton);
+		inputPanel.add(incomeRadio);
+		inputPanel.add(expenseRadio);
+		
 
 		add(inputPanel, BorderLayout.NORTH);
 		add(table, BorderLayout.CENTER);
@@ -131,6 +141,21 @@ public class ExpenseTracker extends JFrame {
 				addTransaction();
 			}
 		});
+		
+		//เช็คว่ากด radio อันไหน ถ้ากดอันนี้ก็ add String ที่มีหมวดหมู่เข้าไป
+		incomeRadio.addActionListener(e->{
+			categoryComboBox.removeAllItems();
+			for(String category : incomeCategories) {
+				categoryComboBox.addItem(category);
+			}
+		});
+		expenseRadio.addActionListener(e ->{
+			categoryComboBox.removeAllItems();
+			for(String category : expenseCategories) {
+				categoryComboBox.addItem(category);
+			}
+		});
+		
 		exportButton.addActionListener(e -> exportToExcel());
 		importData.addActionListener(e -> importDataTotable());
 		showMonthlyChartButton.addActionListener(e -> showMonthlyChart());
@@ -138,6 +163,7 @@ public class ExpenseTracker extends JFrame {
 
 	public void addTransaction() {
 		double money;
+		String category = (String) categoryComboBox.getSelectedItem();
 		String date = (String) dateComboBox.getSelectedItem();
 		String month = (String) monthComboBox.getSelectedItem();
 		String type = expenseRadio.isSelected() ? "Expense" : "Income";
@@ -149,7 +175,7 @@ public class ExpenseTracker extends JFrame {
 			return;
 		}
 		String note = noteField.getText();
-		tableModel.addRow(new Object[] { date, month, type, money, note });
+		tableModel.addRow(new Object[] { date, month, type,category, money, note });
 		updateSummary();
 	}
 
@@ -242,9 +268,12 @@ public class ExpenseTracker extends JFrame {
 
 				// Type
 				rowData.add(row.getCell(2).getStringCellValue());
+				
+				//Category
+				rowData.add(row.getCell(3).getStringCellValue());
 
 				// Money - เป็น Double
-				Cell moneyCell = row.getCell(3);
+				Cell moneyCell = row.getCell(4);
 				if (moneyCell.getCellType() == CellType.NUMERIC) {
 					rowData.add(moneyCell.getNumericCellValue());
 				} else {
@@ -252,7 +281,7 @@ public class ExpenseTracker extends JFrame {
 				}
 
 				// Note
-				rowData.add(row.getCell(4).getStringCellValue());
+				rowData.add(row.getCell(5).getStringCellValue());
 
 				data.add(rowData);
 			}
@@ -329,7 +358,7 @@ public class ExpenseTracker extends JFrame {
 						continue; // Skip header
 					Cell monthCell = row.getCell(1);
 					Cell typeCell = row.getCell(2);
-					Cell amountCell = row.getCell(3);
+					Cell amountCell = row.getCell(4);
 
 					if (monthCell == null || typeCell == null || amountCell == null)
 						continue;
@@ -412,7 +441,7 @@ public class ExpenseTracker extends JFrame {
 		double totalExpense = 0;
 		for (int i = 0; i < tableModel.getRowCount(); i++) {
 			String type = (String) tableModel.getValueAt(i, 2);
-			double amount = (double) tableModel.getValueAt(i, 3);
+			double amount = (double) tableModel.getValueAt(i, 4);
 
 			if (type.equals("Income")) {
 				totalIncome += amount;
@@ -435,6 +464,6 @@ public class ExpenseTracker extends JFrame {
 			e.printStackTrace();
 		}
 
-		new ExpenseTracker().setVisible(true);
+		new TestExpenseTracker().setVisible(true);
 	}
 }
