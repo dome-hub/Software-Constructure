@@ -1,75 +1,99 @@
-private void showMonthlyChart() {
-	    try {
-	        FileInputStream fis = new FileInputStream("ExpenseTracker.xlsx");
-	        Workbook workbook = new XSSFWorkbook(fis);
-	        Sheet sheet = workbook.getSheetAt(0);
+// Chart MOnth
+	private void showMonthlyChart() {
+		try {
+			FileInputStream fis = new FileInputStream("ExpenseTracker22.xlsx"); // อ่านไฟล์ ชื่อExpenseTracker.xlsx
+			Workbook workbook = new XSSFWorkbook(fis);// Workbook เป็นอ็อบเจ็กต์ที่ใช้จัดการกับไฟล์ Excel โดยใช้
+														// XSSFWorkbook
+			Sheet sheet = workbook.getSheetAt(0);// เลือกแผ่นงานแรก (sheet) จากไฟล์ Excel
 
-	        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-	        Map<String, Double> incomeByMonth = new HashMap<>();
-	        Map<String, Double> expenseByMonth = new HashMap<>();
+			DefaultCategoryDataset dataset = new DefaultCategoryDataset();// ใช้เก็บข้อมูลที่จะแสดงในกราฟ
+//		        Map<String, Double> incomeByMonth = new HashMap<>();
+//		        Map<String, Double> expenseByMonth = new HashMap<>();
+			Map<String, Double> incomeByMonth = new TreeMap<>(new MonthComparator());// เก็บข้อมูลแบบเรียง
+			Map<String, Double> expenseByMonth = new TreeMap<>(new MonthComparator());// เก็บข้อมูลแบบเรียง
+			
+			String[] allMonths = { "January", "February", "March", "April", "May", "June", "July", "August",
+					"September", "October", "November", "December" };
+			for (String month : allMonths) {
+				incomeByMonth.put(month, 0.0);
+				expenseByMonth.put(month, 0.0);
+			}
+			
+			for (Row row : sheet) {// วนลูปอ่านข้อมูลแต่ละแถว
+				if (row.getRowNum() == 0)
+					continue; // Skip header
+				Cell monthCell = row.getCell(1);
+				Cell typeCell = row.getCell(2);
+				Cell amountCell = row.getCell(3);
 
-	        for (Row row : sheet) {
-	            if (row.getRowNum() == 0) continue; // Skip header
-	            Cell monthCell = row.getCell(1);
-	            Cell typeCell = row.getCell(2);
-	            Cell amountCell = row.getCell(3);
+				if (monthCell == null || typeCell == null || amountCell == null)
+					continue;
 
-	            if (monthCell == null || typeCell == null || amountCell == null) continue;
+				String month = monthCell.getStringCellValue();
+				String type = typeCell.getStringCellValue();
+				double amount;
 
-	            String month = monthCell.getStringCellValue();
-	            String type = typeCell.getStringCellValue();
-	            double amount;
+				if (amountCell.getCellType() == CellType.NUMERIC) {
+					amount = amountCell.getNumericCellValue();
+				} else if (amountCell.getCellType() == CellType.STRING) {
+					try {
+						amount = Double.parseDouble(amountCell.getStringCellValue());
+					} catch (NumberFormatException e) {
+						System.out.println(
+								"Invalid amount in row " + row.getRowNum() + ": " + amountCell.getStringCellValue());
+						continue;
+					}
+				} else {
+					System.out.println("Unexpected cell type in row " + row.getRowNum());
+					continue;
+				}
 
-	            if (amountCell.getCellType() == CellType.NUMERIC) {
-	                amount = amountCell.getNumericCellValue();
-	            } else if (amountCell.getCellType() == CellType.STRING) {
-	                try {
-	                    amount = Double.parseDouble(amountCell.getStringCellValue());
-	                } catch (NumberFormatException e) {
-	                    System.out.println("Invalid amount in row " + row.getRowNum() + ": " + amountCell.getStringCellValue());
-	                    continue;
-	                }
-	            } else {
-	                System.out.println("Unexpected cell type in row " + row.getRowNum());
-	                continue;
-	            }
+				if (type.equals("Income")) {
+					incomeByMonth.put(month, incomeByMonth.getOrDefault(month, 0.0) + amount);
+				} else if (type.equals("Expense")) {
+					expenseByMonth.put(month, expenseByMonth.getOrDefault(month, 0.0) + amount);
+				}
+			}
+			
+			// Add data to dataset for all months
+			for (String month : incomeByMonth.keySet()) {
+				dataset.addValue(incomeByMonth.get(month), "รายรับ", month);
+				dataset.addValue(expenseByMonth.getOrDefault(month, 0.0), "รายจ่าย", month);
+			}
 
-	            if (type.equals("Income")) {
-	                incomeByMonth.put(month, incomeByMonth.getOrDefault(month, 0.0) + amount);
-	            } else if (type.equals("Expense")) {
-	                expenseByMonth.put(month, expenseByMonth.getOrDefault(month, 0.0) + amount);
-	            }
-	        }
+			JFreeChart chart = ChartFactory.createBarChart("สรุปรายรับ-จ่าย 12 เดือน", "เดือน", "จำนวนเงิน", dataset,
+					PlotOrientation.VERTICAL, true, true, false);
 
-	        for (String month : incomeByMonth.keySet()) {
-	            dataset.addValue(incomeByMonth.get(month), "รายรับ", month);
-	            dataset.addValue(expenseByMonth.getOrDefault(month, 0.0), "รายจ่าย", month);
-	        }
+			CategoryPlot plot = (CategoryPlot) chart.getPlot();
+			BarRenderer renderer = (BarRenderer) plot.getRenderer();
+			renderer.setSeriesPaint(0, Color.GREEN);
+			renderer.setSeriesPaint(1, Color.RED);
 
-	        JFreeChart chart = ChartFactory.createBarChart(
-	            "สรุปรายรับ-จ่าย 6 เดือน",
-	            "เดือน",
-	            "จำนวนเงิน",
-	            dataset,
-	            PlotOrientation.VERTICAL,
-	            true,
-	            true,
-	            false
-	        );
+			ChartFrame frame = new ChartFrame("Monthly Income and Expense Chart", chart);
+			frame.pack();
+			frame.setVisible(true);
 
-	        CategoryPlot plot = (CategoryPlot) chart.getPlot();
-	        BarRenderer renderer = (BarRenderer) plot.getRenderer();
-	        renderer.setSeriesPaint(0, Color.GREEN);
-	        renderer.setSeriesPaint(1, Color.ORANGE);
+			workbook.close();
+			fis.close();
+		} catch (IOException ex) {
+			ex.printStackTrace();
+			JOptionPane.showMessageDialog(this, "Error reading Excel file: " + ex.getMessage());
+		}
+	}
 
-	        ChartFrame frame = new ChartFrame("Monthly Income and Expense Chart", chart);
-	        frame.pack();
-	        frame.setVisible(true);
+	private class MonthComparator implements Comparator<String> {
+		private final String[] months = { "January", "February", "March", "April", "May", "June", "July", "August",
+				"September", "October", "November", "December" };
+		private final Map<String, Integer> monthOrder = new HashMap<>();
 
-	        workbook.close();
-	        fis.close();
-	    } catch (IOException ex) {
-	        ex.printStackTrace();
-	        JOptionPane.showMessageDialog(this, "Error reading Excel file: " + ex.getMessage());
-	    }
+		public MonthComparator() {
+			for (int i = 0; i < months.length; i++) {
+				monthOrder.put(months[i], i);
+			}
+		}
+
+		@Override
+		public int compare(String m1, String m2) {
+			return Integer.compare(monthOrder.getOrDefault(m1, 12), monthOrder.getOrDefault(m2, 12));
+		}
 	}
