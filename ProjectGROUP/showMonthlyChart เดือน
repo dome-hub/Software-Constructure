@@ -12,9 +12,9 @@
 			Map<String, Double> incomeByMonth = new TreeMap<>(new MonthComparator());// เก็บข้อมูลแบบเรียง
 			Map<String, Double> expenseByMonth = new TreeMap<>(new MonthComparator());// เก็บข้อมูลแบบเรียง
 			
-			String[] allMonths = { "January", "February", "March", "April", "May", "June", "July", "August",
-					"September", "October", "November", "December" };
-			for (String month : allMonths) {
+//			String[] allMonths = { "January", "February", "March", "April", "May", "June", "July", "August",
+//					"September", "October", "November", "December" };
+			for (String month : MonthComparator.months) {
 				incomeByMonth.put(month, 0.0);
 				expenseByMonth.put(month, 0.0);
 			}
@@ -81,8 +81,9 @@
 		}
 	}
 
-	private class MonthComparator implements Comparator<String> {
-		private final String[] months = { "January", "February", "March", "April", "May", "June", "July", "August",
+	//เปลี่ยนเป็น static เพื่อให้ Showgraph ใช้งาน months ได้
+	private static class MonthComparator implements Comparator<String> {
+		private static final String[] months = { "January", "February", "March", "April", "May", "June", "July", "August",
 				"September", "October", "November", "December" };
 		private final Map<String, Integer> monthOrder = new HashMap<>();
 
