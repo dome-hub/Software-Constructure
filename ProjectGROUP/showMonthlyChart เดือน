@@ -70,6 +70,7 @@
 			renderer.setSeriesPaint(1, Color.RED);
 
 			ChartFrame frame = new ChartFrame("Monthly Income and Expense Chart", chart);
+			frame.setIconImage(getIconImage());
 			frame.pack();
 			frame.setVisible(true);
 
