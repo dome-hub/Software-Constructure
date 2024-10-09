@@ -29,7 +29,7 @@ import org.jfree.chart.plot.*;
 import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.data.category.*;
 
-public class TestExpenseTracker extends JFrame {
+public class ExpenseTracker extends JFrame {
 	// private JLabel balanceLabel; // label แสดงเงินคงเหลือ
 	private JButton addButton, deleteButton, exportButton, importData;
 	private JButton showMonthlyChartButton;
@@ -43,7 +43,7 @@ public class TestExpenseTracker extends JFrame {
 	private JComboBox<String> categoryComboBox;
 	private double balance = 0.0;
 
-	public TestExpenseTracker() {
+	public ExpenseTracker() {
 		setTitle("Expense Tracker");
 		setSize(800, 600);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -53,6 +53,14 @@ public class TestExpenseTracker extends JFrame {
 		ImageIcon icon = new ImageIcon("Icon.png");
 		setIconImage(icon.getImage());
 		//setIconImage(new ImageIcon("ExpenseIcon.png").getImage());
+		
+//		//Icon Button
+//		ImageIcon plus = new ImageIcon("plus.png");
+//		Image img = plus.getImage();
+//		Image scaleImg = img.getScaledInstance(20, 20, DO_NOTHING_ON_CLOSE);
+//		ImageIcon resizePlus = new ImageIcon(scaleImg);
+		
+		
 		
 		setLayout(new BorderLayout());
 		JPanel inputPanel = new JPanel(new GridLayout(4, 3, 5, 5));
@@ -79,8 +87,10 @@ public class TestExpenseTracker extends JFrame {
 		expenseRadio.setSelected(true);
 
 		addButton = new JButton("Add");
+		addButton.setBackground(Color.decode("#00CCFF")); // สีส้ม
 		deleteButton = new JButton("Delete");
-
+		deleteButton.setBackground(Color.decode("#CC0033"));
+		deleteButton.setForeground(Color.white);
 		amountField = new JTextField();
 		amountField.setFont(new Font("Tahoma", Font.PLAIN, 15)); // set font
 		noteField = new JTextField();
@@ -98,9 +108,13 @@ public class TestExpenseTracker extends JFrame {
 		totalIncomeLabel = new JLabel("Total Income : ");
 		totalExpenseLabel = new JLabel("Total Expense");
 		exportButton = new JButton("Save Data");
+		exportButton.setBackground(Color.decode("#00CC66"));
 		importData = new JButton("Import Data");
+		importData.setBackground(Color.decode("#FFFFFF"));
+		
 		showMonthlyChartButton = new JButton("Show Month Chart");
-
+		showMonthlyChartButton.setBackground(Color.decode("#6633FF"));
+		showMonthlyChartButton.setForeground(Color.white);
 		summaryPanel.add(balanceLabel);
 		summaryPanel.add(exportButton);
 		summaryPanel.add(totalIncomeLabel);
@@ -196,7 +210,7 @@ public class TestExpenseTracker extends JFrame {
 		Sheet sheet;
 		int lastRowNum;
 		try {
-			FileInputStream fis = new FileInputStream("ExpenseTracker22.xlsx");// เช็คชื่อไฟล์นี้ ถ้ามีจะเขียนต่อ
+			FileInputStream fis = new FileInputStream("ExpenseTracker.xlsx");// เช็คชื่อไฟล์นี้ ถ้ามีจะเขียนต่อ
 			workbook = new XSSFWorkbook(fis);
 			sheet = workbook.getSheetAt(0);
 			lastRowNum = sheet.getLastRowNum();// ดึงค่า หมายเลขของแถวสุดท้าย
@@ -223,7 +237,7 @@ public class TestExpenseTracker extends JFrame {
 
 		// Save file
 		try {
-			FileOutputStream outputStream = new FileOutputStream("ExpenseTracker22.xlsx");
+			FileOutputStream outputStream = new FileOutputStream("ExpenseTracker.xlsx");
 			workbook.write(outputStream);
 			JOptionPane.showMessageDialog(this, "Data Exported to Excel");
 		} catch (IOException e) {
@@ -249,7 +263,7 @@ public class TestExpenseTracker extends JFrame {
 
 	public void importDataTotable() {
 		// อ่านไฟล์
-		try (FileInputStream fis = new FileInputStream("ExpenseTracker22.xlsx");
+		try (FileInputStream fis = new FileInputStream("ExpenseTracker.xlsx");
 				Workbook workbook = new XSSFWorkbook(fis)) {
 
 			Sheet sheet = workbook.getSheetAt(0);
@@ -308,7 +322,7 @@ public class TestExpenseTracker extends JFrame {
 				tableModel.addRow(rowData);
 			}
 
-			// อัปเดตสรุปและ UI
+			
 			// SwingUtilities.invokeLater(() -> {
 			updateSummary();
 			// repaint(); // เพิ่มการ repaint เพื่อให้แน่ใจว่า UI จะอัปเดต
@@ -322,7 +336,7 @@ public class TestExpenseTracker extends JFrame {
 					sheet.removeRow(row);
 				}
 			}//เขียนข้อมูลเปล่าๆทับไปในExcel
-			try (FileOutputStream fos = new FileOutputStream("ExpenseTracker22.xlsx")) {
+			try (FileOutputStream fos = new FileOutputStream("ExpenseTracker.xlsx")) {
 			    workbook.write(fos);
 			}
 
@@ -334,10 +348,9 @@ public class TestExpenseTracker extends JFrame {
 	}
 
 	// Chart MOnth
-		private void showMonthlyChart() {
-			
+		private void showMonthlyChart() {	
 			try {
-				FileInputStream fis = new FileInputStream("ExpenseTracker22.xlsx"); // อ่านไฟล์ ชื่อExpenseTracker.xlsx
+				FileInputStream fis = new FileInputStream("ExpenseTracker.xlsx"); // อ่านไฟล์ ชื่อExpenseTracker.xlsx
 				Workbook workbook = new XSSFWorkbook(fis);// Workbook เป็นอ็อบเจ็กต์ที่ใช้จัดการกับไฟล์ Excel โดยใช้
 															// XSSFWorkbook
 				Sheet sheet = workbook.getSheetAt(0);// เลือกแผ่นงานแรก (sheet) จากไฟล์ Excel
@@ -466,6 +479,6 @@ public class TestExpenseTracker extends JFrame {
 			e.printStackTrace();
 		}
 
-		new TestExpenseTracker().setVisible(true);
+		new ExpenseTracker().setVisible(true);
 	}
 }
