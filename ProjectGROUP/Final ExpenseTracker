@@ -64,8 +64,8 @@ public class TestExpenseTracker extends JFrame {
 		monthComboBox = new JComboBox<String>(months);
 		dateComboBox = new JComboBox<String>(date);
 
-		String[] incomeCategories = {" ","Bonus","Parents","Salary","Other"};
-		String[] expenseCategories = {" ","Food","Beverage","Travel","accommodation","Other"};
+		String[] incomeCategories = {" ","Salary","Profits","Parents","Bonus","Other"};
+		String[] expenseCategories = {" ","Food","Beverage","Travel","Accommodation","Shopping","Other"};
 		
 		categoryComboBox = new JComboBox<String>(expenseCategories);
 		
@@ -97,8 +97,8 @@ public class TestExpenseTracker extends JFrame {
 		balanceLabel = new JLabel("Total Amount : ");
 		totalIncomeLabel = new JLabel("Total Income : ");
 		totalExpenseLabel = new JLabel("Total Expense");
-		exportButton = new JButton("Export to excel");
-		importData = new JButton("Import data");
+		exportButton = new JButton("Save Data");
+		importData = new JButton("Import Data");
 		showMonthlyChartButton = new JButton("Show Month Chart");
 
 		summaryPanel.add(balanceLabel);
@@ -119,10 +119,12 @@ public class TestExpenseTracker extends JFrame {
 		inputPanel.add(noteField);
 		inputPanel.add(new JLabel("Catogory : "));	
 		inputPanel.add(categoryComboBox);
-		inputPanel.add(addButton);
-		inputPanel.add(deleteButton);
+		inputPanel.add(new JLabel(" "));
+		inputPanel.add(new JLabel(" "));
 		inputPanel.add(incomeRadio);
 		inputPanel.add(expenseRadio);
+		inputPanel.add(addButton);
+		inputPanel.add(deleteButton);
 		
 
 		add(inputPanel, BorderLayout.NORTH);
@@ -458,7 +460,7 @@ public class TestExpenseTracker extends JFrame {
 	public static void main(String[] args) {
 		try {
 			// UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
-			 UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+			 //UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
 
 		} catch (Exception e) {
 			e.printStackTrace();
