@@ -1,0 +1,160 @@
+package Lab11;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.Random;
+
+public class Minesweeper extends JFrame {
+    private int rows;      // Number of rows
+    private int cols;      // Number of columns
+    private int numMines;  // Number of mines
+    private JButton[][] buttons;
+    private boolean[][] mines;
+    private boolean[][] revealed;
+    private boolean[][] flagged;
+
+    public Minesweeper(int rows, int cols, int numMines) {
+        this.rows = rows;
+        this.cols = cols;
+        this.numMines = numMines;
+
+        buttons = new JButton[rows][cols];
+        mines = new boolean[rows][cols];
+        revealed = new boolean[rows][cols];
+        flagged = new boolean[rows][cols];
+
+        setTitle("Minesweeper");
+        setSize(700,700);
+        setLayout(new GridLayout(rows, cols));
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        initializeGame();
+        setVisible(true);
+    }
+
+    private void initializeGame() {
+        // Add buttons to the grid
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                buttons[row][col] = new JButton();
+                buttons[row][col].setFont(new Font("Arial", Font.BOLD, 22));
+                final int r = row;
+                final int c = col;
+                buttons[row][col].addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mousePressed(MouseEvent e) {
+                        // Left-click reveals the cell
+                        if (SwingUtilities.isLeftMouseButton(e)) {
+                            if (!flagged[r][c] && !revealed[r][c]) {
+                                revealCell(r, c);
+                            }
+                        }
+                        // Right-click places/removes a flag
+                        else if (SwingUtilities.isRightMouseButton(e)) {
+                            if (!revealed[r][c]) {
+                                toggleFlag(r, c);
+                            }
+                        }
+                    }
+                });
+                add(buttons[row][col]);
+            }
+        }
+
+        // Place mines randomly
+        Random rand = new Random();
+        int placedMines = 0;
+        while (placedMines < numMines) {
+            int row = rand.nextInt(rows);
+            int col = rand.nextInt(cols);
+            if (!mines[row][col]) {
+                mines[row][col] = true;
+                placedMines++;
+            }
+        }
+    }
+
+    private void toggleFlag(int row, int col) {
+        if (!flagged[row][col]) {
+            buttons[row][col].setText(">");
+            flagged[row][col] = true;
+        } else {
+            buttons[row][col].setText("");
+            flagged[row][col] = false;
+        }
+    }
+
+    private void revealCell(int row, int col) {
+        if (mines[row][col]) {
+            // Game Over, reveal all mines
+            buttons[row][col].setText("M");
+            buttons[row][col].setBackground(Color.RED);
+            revealAllMines();
+            JOptionPane.showMessageDialog(this, "Game Over! You hit a mine.");
+        } else {
+            int adjacentMines = countAdjacentMines(row, col);
+            buttons[row][col].setText(adjacentMines > 0 ? String.valueOf(adjacentMines) : "");
+            buttons[row][col].setEnabled(false);
+            revealed[row][col] = true;
+
+            // If no adjacent mines, reveal surrounding cells
+            if (adjacentMines == 0) {
+                for (int r = Math.max(0, row - 1); r <= Math.min(rows - 1, row + 1); r++) {
+                    for (int c = Math.max(0, col - 1); c <= Math.min(cols - 1, col + 1); c++) {
+                        if (!revealed[r][c] && !flagged[r][c]) {
+                            revealCell(r, c);
+                        }
+                    }
+                }
+            }
+
+            // Check for win condition
+            if (checkWin()) {
+                JOptionPane.showMessageDialog(this, "Congratulations! You win.");
+                revealAllMines();
+            }
+        }
+    }
+
+    private int countAdjacentMines(int row, int col) {
+        int count = 0;
+        for (int r = Math.max(0, row - 1); r <= Math.min(rows - 1, row + 1); r++) {
+            for (int c = Math.max(0, col - 1); c <= Math.min(cols - 1, col + 1); c++) {
+                if (mines[r][c]) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    private void revealAllMines() {
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                if (mines[row][col]) {
+                    buttons[row][col].setText("M");
+                    buttons[row][col].setBackground(Color.RED);
+                }
+                buttons[row][col].setEnabled(false);
+            }
+        }
+    }
+
+    private boolean checkWin() {
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                if (!mines[row][col] && !revealed[row][col]) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    public static void main(String[] args) {
+
+                new Minesweeper(10, 10, 10);
+
+    }
+}
