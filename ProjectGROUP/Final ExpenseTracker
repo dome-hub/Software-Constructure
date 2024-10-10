@@ -1,4 +1,4 @@
-package Test;
+package ProjectMoney;
 
 import java.awt.*;
 import java.io.*;
@@ -14,6 +14,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.*;
 
@@ -44,9 +45,10 @@ public class ExpenseTracker extends JFrame {
 	private double balance = 0.0;
 
 	public ExpenseTracker() {
+		
 		setTitle("Expense Tracker");
 		setSize(800, 600);
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		setLocationRelativeTo(null);
 		
 		// Set window icon
@@ -102,6 +104,26 @@ public class ExpenseTracker extends JFrame {
 		JScrollPane table = new JScrollPane(transactionTable);
 		transactionTable.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		// JPanel table = new JPanel(transactionTable); // Why
+		//เปลี่ยนสีตัวเลขในตารางMoney ถ้ากดIncomeจะเป็นสีเขียว ถ้ากดExpenseจะเป็นสีแดง
+        transactionTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                
+                if (column == 4) { // Money column
+                    String type = (String) table.getValueAt(row, 2); // Type column
+                    if (type.equals("Income")) {
+                        c.setForeground(Color.GREEN);
+                    } else if (type.equals("Expense")) {
+                        c.setForeground(Color.RED);
+                    }
+                } else {
+                    c.setForeground(table.getForeground());
+                }
+                
+                return c;
+            }
+        });
 
 		JPanel summaryPanel = new JPanel(new GridLayout(3, 2, 3, 5));
 		balanceLabel = new JLabel("Total Amount : ");
@@ -175,7 +197,20 @@ public class ExpenseTracker extends JFrame {
 		exportButton.addActionListener(e -> exportToExcel());
 		importData.addActionListener(e -> importDataTotable());
 		showMonthlyChartButton.addActionListener(e -> showMonthlyChart());
-	}
+		
+		addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                if (JOptionPane.showConfirmDialog(ExpenseTracker.this, 
+                    "Don't forget to Save Data. Are you sure you want to close this window?", "Close Window?", 
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION){
+                    System.exit(0);
+                }
+            }
+        });
+    }
+		
 
 	public void addTransaction() {
 		double money;
@@ -462,13 +497,19 @@ public class ExpenseTracker extends JFrame {
 				totalIncome += amount;
 			} else
 				totalExpense += amount;
-
+ฟ
 		}
 		double balance = totalIncome - totalExpense;
 		balanceLabel.setText("Total Amount : " + balance);
 		totalExpenseLabel.setText("Total Expense : " + totalExpense);
 		totalIncomeLabel.setText("Total Income : " + totalIncome);
+		
+		//set Color Total amount
+		balanceLabel.setForeground(balance < 0 ? Color.RED : (balance > 0 ? Color.GREEN : Color.BLACK));
+
 	}
+	
+	
 
 	public static void main(String[] args) {
 		try {
