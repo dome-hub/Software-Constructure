@@ -1,0 +1,595 @@
+package ProjectMoney;
+
+import java.awt.*;
+import java.io.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.image.ImageObserver;
+import java.awt.image.ImageProducer;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.*;
+
+import org.apache.logging.log4j.core.config.json.JsonConfiguration;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.*;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.*;
+
+import org.jfree.chart.*;
+import org.jfree.chart.plot.*;
+import org.jfree.chart.renderer.category.BarRenderer;
+import org.jfree.data.category.*;
+
+public class ExpenseTracker extends JFrame {
+	// private JLabel balanceLabel; // label แสดงเงินคงเหลือ
+	private JButton addButton, deleteButton, exportButton, importData;
+	private JButton showMonthlyChartButton;
+	private JTextField amountField, noteField;
+	private JRadioButton incomeRadio, expenseRadio;
+	private JComboBox<String> monthComboBox;
+	private JComboBox<String> dateComboBox;
+	private DefaultTableModel tableModel;
+	private JTable transactionTable;
+	private JLabel totalIncomeLabel, totalExpenseLabel, balanceLabel;
+	private JComboBox<String> categoryComboBox;
+	private double balance = 0.0;
+
+	public ExpenseTracker() {
+		
+		setTitle("Expense Tracker");
+		setSize(800, 600);
+		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		setLocationRelativeTo(null);
+		
+		// Set window icon
+		ImageIcon icon = new ImageIcon("Icon.png");
+		setIconImage(icon.getImage());
+		//setIconImage(new ImageIcon("ExpenseIcon.png").getImage());
+		
+//		//Icon Button
+//		ImageIcon plus = new ImageIcon("plus.png");
+//		Image img = plus.getImage();
+//		Image scaleImg = img.getScaledInstance(20, 20, DO_NOTHING_ON_CLOSE);
+//		ImageIcon resizePlus = new ImageIcon(scaleImg);
+		
+		
+		
+		setLayout(new BorderLayout());
+		JPanel inputPanel = new JPanel(new GridLayout(4, 3, 5, 5));
+
+		String[] months = { "January", "February", "March", "April", "May", "June", "July", "August", "September",
+				"October", "November", "December" };
+		String[] date = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17",
+				"18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31" };
+		monthComboBox = new JComboBox<String>(months);
+		dateComboBox = new JComboBox<String>(date);
+
+		String[] incomeCategories = {" ","Salary","Profits","Parents","Bonus","Other"};
+		String[] expenseCategories = {" ","Food","Beverage","Travel","Accommodation","Shopping","Other"};
+		
+		categoryComboBox = new JComboBox<String>(expenseCategories);
+		
+		
+		// radio
+		incomeRadio = new JRadioButton("Income");
+		expenseRadio = new JRadioButton("Expense");
+		ButtonGroup g = new ButtonGroup();
+		g.add(incomeRadio);
+		g.add(expenseRadio);
+		expenseRadio.setSelected(true);
+
+		addButton = new JButton("Add");
+		addButton.setBackground(Color.decode("#00CCFF")); // สีส้ม
+		deleteButton = new JButton("Delete");
+		deleteButton.setBackground(Color.decode("#CC0033"));
+		deleteButton.setForeground(Color.white);
+		amountField = new JTextField();
+		amountField.setFont(new Font("Tahoma", Font.PLAIN, 15)); // set font
+		noteField = new JTextField();
+		noteField.setFont(new Font("Tahoma", Font.PLAIN, 15)); // set font
+
+		String[] columnNames = { "Date", "Month", "Type","Category", "Money", "Note" };
+		tableModel = new DefaultTableModel(columnNames, 0); // 0 คือตัวเลขที่ระบุจำนวนแถวเริ่มต้น
+		transactionTable = new JTable(tableModel);
+		JScrollPane table = new JScrollPane(transactionTable);
+		transactionTable.setFont(new Font("Tahoma", Font.PLAIN, 14));
+		// JPanel table = new JPanel(transactionTable); // Why
+		//เปลี่ยนสีตัวเลขในตารางMoney ถ้ากดIncomeจะเป็นสีเขียว ถ้ากดExpenseจะเป็นสีแดง
+        transactionTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                
+                if (column == 4) { // Money column
+                    String type = (String) table.getValueAt(row, 2); // Type column
+                    if (type.equals("Income")) {
+                        c.setForeground(Color.GREEN);
+                    } else if (type.equals("Expense")) {
+                        c.setForeground(Color.RED);
+                    }
+                } else {
+                    c.setForeground(table.getForeground());
+                }
+                
+                return c;
+            }
+        });
+
+		JPanel summaryPanel = new JPanel(new GridLayout(3, 2, 3, 5));
+		balanceLabel = new JLabel("Total Amount : ");
+		totalIncomeLabel = new JLabel("Total Income : ");
+		totalExpenseLabel = new JLabel("Total Expense");
+		exportButton = new JButton("Save Data");
+		exportButton.setBackground(Color.decode("#00CC66"));
+		importData = new JButton("Import Data");
+		importData.setBackground(Color.decode("#FFFFFF"));
+		
+		showMonthlyChartButton = new JButton("Show Month Chart");
+		showMonthlyChartButton.setBackground(Color.decode("#6633FF"));
+		showMonthlyChartButton.setForeground(Color.white);
+		summaryPanel.add(balanceLabel);
+		summaryPanel.add(exportButton);
+		summaryPanel.add(totalIncomeLabel);
+		summaryPanel.add(importData);
+		summaryPanel.add(totalExpenseLabel);
+		summaryPanel.add(showMonthlyChartButton);
+
+		
+		inputPanel.add(new JLabel("Month:"));
+		inputPanel.add(monthComboBox);
+		inputPanel.add(new JLabel("Date"));
+		inputPanel.add(dateComboBox);
+		inputPanel.add(new JLabel("Amount :"));
+		inputPanel.add(amountField);
+		inputPanel.add(new JLabel("Note"));
+		inputPanel.add(noteField);
+		inputPanel.add(new JLabel("Catogory : "));	
+		inputPanel.add(categoryComboBox);
+		inputPanel.add(new JLabel(" "));
+		inputPanel.add(new JLabel(" "));
+		inputPanel.add(incomeRadio);
+		inputPanel.add(expenseRadio);
+		inputPanel.add(addButton);
+		inputPanel.add(deleteButton);
+		
+
+		add(inputPanel, BorderLayout.NORTH);
+		add(table, BorderLayout.CENTER);
+		add(summaryPanel, BorderLayout.SOUTH);
+
+		deleteButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				deleteTransaction();
+			}
+		});
+		addButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				addTransaction();
+			}
+		});
+		
+		//เช็คว่ากด radio อันไหน ถ้ากดอันนี้ก็ add String ที่มีหมวดหมู่เข้าไป
+		incomeRadio.addActionListener(e->{
+			categoryComboBox.removeAllItems();
+			for(String category : incomeCategories) {
+				categoryComboBox.addItem(category);
+			}
+		});
+		expenseRadio.addActionListener(e ->{
+			categoryComboBox.removeAllItems();
+			for(String category : expenseCategories) {
+				categoryComboBox.addItem(category);
+			}
+		});
+		
+		exportButton.addActionListener(e -> exportToExcel());
+		importData.addActionListener(e -> importDataTotable());
+		showMonthlyChartButton.addActionListener(e -> showMonthlyChart());
+		
+		addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                if (JOptionPane.showConfirmDialog(ExpenseTracker.this, 
+                    "Don't forget to Save Data. Are you sure you want to close this window?", "Close Window?", 
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION){
+                    System.exit(0);
+                }
+            }
+        });
+    }
+		
+
+	public void addTransaction() {
+		double money;
+		String category = (String) categoryComboBox.getSelectedItem();
+		String date = (String) dateComboBox.getSelectedItem();
+		String month = (String) monthComboBox.getSelectedItem();
+		String type = expenseRadio.isSelected() ? "Expense" : "Income";
+		// Checks if the text consists of digits only and not 0
+		if (amountField.getText().matches("\\d+(\\.\\d+)?") && Double.parseDouble(amountField.getText()) != 0)
+			money = Double.parseDouble(amountField.getText());
+		else {
+			JOptionPane.showMessageDialog(this, "Digit Only , Can't input 0");
+			return;
+		}
+		String note = noteField.getText();
+		tableModel.addRow(new Object[] { date, month, type,category, money, note });
+		updateSummary();
+	}
+
+	public void deleteTransaction() {
+		int selectedIndex = transactionTable.getSelectedRow();
+		if (selectedIndex != -1) {// ตรวจสอบว่ามีแถวที่ถูกเลือกหรือไม่
+			tableModel.removeRow(selectedIndex);
+			updateSummary();
+		} else
+			JOptionPane.showMessageDialog(this, "Select transaction first !!", "No Selection",
+					JOptionPane.WARNING_MESSAGE);
+	}
+
+	public void exportToExcel() {
+		Workbook workbook;
+		Sheet sheet;
+		int lastRowNum;
+		try {
+			FileInputStream fis = new FileInputStream("ExpenseTracker.xlsx");// เช็คชื่อไฟล์นี้ ถ้ามีจะเขียนต่อ
+			workbook = new XSSFWorkbook(fis);
+			sheet = workbook.getSheetAt(0);
+			lastRowNum = sheet.getLastRowNum();// ดึงค่า หมายเลขของแถวสุดท้าย
+			fis.close();
+		} catch (IOException e) {
+			workbook = new XSSFWorkbook();
+			sheet = workbook.createSheet("Expense Tracker2");
+			lastRowNum = 0;
+			Row headerRow = sheet.createRow(0);
+			for (int i = 0; i < tableModel.getColumnCount(); i++) {
+				Cell cell = headerRow.createCell(i);
+				cell.setCellValue(tableModel.getColumnName(i));
+			}
+		}
+
+		// เพิ่มข้อมูลจาก JTable ลงใน Excel
+		for (int i = 0; i < tableModel.getRowCount(); i++) {
+			Row row = sheet.createRow(lastRowNum + i + 1);// สร้างแถวใหม่ในชีท Excelโดยต่อจากแถวเก่าสุดท้าย
+			for (int j = 0; j < tableModel.getColumnCount(); j++) {
+				Cell cell = row.createCell(j);
+				cell.setCellValue(tableModel.getValueAt(i, j).toString());
+			}
+		}
+
+		// Save file
+		try {
+			FileOutputStream outputStream = new FileOutputStream("ExpenseTracker.xlsx");
+			workbook.write(outputStream);
+			JOptionPane.showMessageDialog(this, "Data Exported to Excel");
+		} catch (IOException e) {
+			JOptionPane.showMessageDialog(this, "Error exporting data: ");
+		}
+		// clear Jtable
+		tableModel.setRowCount(0);
+		updateSummary();
+	}
+
+	// PLAM
+	// ฟังก์ชันช่วยสำหรับแปลงชื่อเดือนเป็นตัวเลข (index)
+	private int getMonthIndex(String month) {
+		String[] months = { "January", "February", "March", "April", "May", "June", "July", "August", "September",
+				"October", "November", "December" };
+		for (int i = 0; i < months.length; i++) {
+			if (months[i].equalsIgnoreCase(month)) {
+				return i + 1; // ดัชนีเริ่มต้นที่ 1 (January = 1)
+			}
+		}
+		return -1; // ถ้าไม่เจอเดือนที่ตรงกัน
+	}
+
+	public void importDataTotable() {
+		// อ่านไฟล์
+		try (FileInputStream fis = new FileInputStream("ExpenseTracker.xlsx");
+				Workbook workbook = new XSSFWorkbook(fis)) {
+
+			Sheet sheet = workbook.getSheetAt(0);
+			// clear table
+			tableModel.setRowCount(0);
+			
+			ArrayList<Vector<Object>> data = new ArrayList<>();
+
+			for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+				Row row = sheet.getRow(i);
+				Vector<Object> rowData = new Vector<>();
+
+				// Date
+				rowData.add(row.getCell(0).getStringCellValue());
+
+				// Month
+				rowData.add(row.getCell(1).getStringCellValue());
+
+				// Type
+				rowData.add(row.getCell(2).getStringCellValue());
+				
+				//Category
+				rowData.add(row.getCell(3).getStringCellValue());
+
+				// Money - เป็น Double
+				Cell moneyCell = row.getCell(4);
+				if (moneyCell.getCellType() == CellType.NUMERIC) {
+					rowData.add(moneyCell.getNumericCellValue());
+				} else {
+					rowData.add(Double.parseDouble(moneyCell.getStringCellValue()));
+				}
+
+				// Note
+				rowData.add(row.getCell(5).getStringCellValue());
+
+				data.add(rowData);
+			}
+
+			// เรียงข้อมูลตามเดือนและวันที่
+			Collections.sort(data, new Comparator<Vector<Object>>() {
+				@Override
+				public int compare(Vector<Object> o1, Vector<Object> o2) {
+					int monthComparison = Integer.compare(getMonthIndex((String) o1.get(1)),
+							getMonthIndex((String) o2.get(1)));
+					if (monthComparison != 0) {
+						return monthComparison;
+					}
+					int day1 = Integer.parseInt((String) o1.get(0));
+					int day2 = Integer.parseInt((String) o2.get(0));
+					return Integer.compare(day1, day2);
+				}
+			});
+
+			// เพิ่มข้อมูลลง JTable หลังจากเรียงข้อมูลเสร็จ
+			for (Vector<Object> rowData : data) {
+				tableModel.addRow(rowData);
+			}
+
+			
+			// SwingUtilities.invokeLater(() -> {
+			updateSummary();
+			// repaint(); // เพิ่มการ repaint เพื่อให้แน่ใจว่า UI จะอัปเดต
+			// });
+			
+			
+//			// ล้างข้อมูลในไฟล์ Sheetทุกแถวทีละแถวตั้งแต่แถวสุดท้าย >=1เพื่อป้องกันการลบแถวบนสุด(Excel)
+			for (int i = sheet.getLastRowNum(); i >= 1; i--) {
+				Row row = sheet.getRow(i);
+				if (row != null) {
+					sheet.removeRow(row);
+				}
+			}//เขียนข้อมูลเปล่าๆทับไปในExcel
+			try (FileOutputStream fos = new FileOutputStream("ExpenseTracker.xlsx")) {
+			    workbook.write(fos);
+			}
+
+			JOptionPane.showMessageDialog(this, "Data Imported, Sorted,Summary Updated and Clear Successfully!");
+		} catch (IOException e) {
+			JOptionPane.showMessageDialog(this, "Error importing data: ");
+		}
+
+	}
+
+	// Chart MOnth
+	public void showMonthlyChart() {
+        JDialog chartDialog = new JDialog(this, "Monthly Income and Expense Chart", true);
+        chartDialog.setSize(800, 600);
+        chartDialog.setLocationRelativeTo(this);
+        
+        // สร้าง JPanel สำหรับการเลือกเดือน
+        JPanel selectionPanel = new JPanel(new FlowLayout());
+        String[] months = { "All Months", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
+        JComboBox<String> firstMonthComboBox = new JComboBox<>(months);
+        JComboBox<String> secondMonthComboBox = new JComboBox<>(months);
+        selectionPanel.add(new JLabel("Select First Month:"));
+        selectionPanel.add(firstMonthComboBox);
+        selectionPanel.add(new JLabel("Select Second Month:"));
+        selectionPanel.add(secondMonthComboBox);
+        
+        // เพิ่มปุ่มต่างๆ
+        JButton updateChartButton = new JButton("Update Chart");
+        JButton showAllButton = new JButton("Show All Months");
+        selectionPanel.add(updateChartButton);
+        selectionPanel.add(showAllButton);
+        chartDialog.add(selectionPanel, BorderLayout.NORTH);
+        
+        // สร้างข้อมูลสำหรับกราฟ
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        
+        // ประกาศตัวแปร totalIncomePerMonth และ totalExpensePerMonth ให้อยู่ระดับคลาส
+        double[] totalIncomePerMonth = new double[13];
+        double[] totalExpensePerMonth = new double[13];
+        
+        // ActionListener สำหรับการอัพเดตกราฟตามเดือนที่เลือก
+        ActionListener updateChartAction = e -> {
+            dataset.clear(); // ล้างข้อมูลเก่า
+            int firstSelectedMonthIndex = firstMonthComboBox.getSelectedIndex();
+            int secondSelectedMonthIndex = secondMonthComboBox.getSelectedIndex();
+            Arrays.fill(totalIncomePerMonth, 0); // เคลียร์ข้อมูลใน array
+            Arrays.fill(totalExpensePerMonth, 0);
+            
+            // คำนวณรายรับรายจ่ายจาก transactionTable
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
+                String type = (String) tableModel.getValueAt(i, 2);
+                String month = (String) tableModel.getValueAt(i, 1);
+                double money = (double) tableModel.getValueAt(i, 4);
+                int monthIndex = Arrays.asList(months).indexOf(month); // หาเดือนใน array
+                if (type.equals("Income")) {
+                    totalIncomePerMonth[monthIndex] += money;
+                    totalIncomePerMonth[0] += money;  // สะสมสำหรับ "All Months"
+                } else {
+                    totalExpensePerMonth[monthIndex] += money;
+                    totalExpensePerMonth[0] += money;
+                }
+            }
+            
+            // กรณีที่เลือก "All Months" หรือสองเดือน
+            if (firstSelectedMonthIndex == 0 || secondSelectedMonthIndex == 0) {
+                dataset.addValue(totalIncomePerMonth[0], "Income", "All Months");
+                dataset.addValue(totalExpensePerMonth[0], "Expense", "All Months");
+            } else {
+                dataset.addValue(totalIncomePerMonth[firstSelectedMonthIndex], "Income", months[firstSelectedMonthIndex]);
+                dataset.addValue(totalExpensePerMonth[firstSelectedMonthIndex], "Expense", months[firstSelectedMonthIndex]);
+                dataset.addValue(totalIncomePerMonth[secondSelectedMonthIndex], "Income", months[secondSelectedMonthIndex]);
+                dataset.addValue(totalExpensePerMonth[secondSelectedMonthIndex], "Expense", months[secondSelectedMonthIndex]);
+            }
+        };
+        
+        // ActionListener สำหรับแสดงกราฟทุกเดือน
+        ActionListener showAllMonthsAction = e -> {
+            dataset.clear();
+            for (int i = 0; i < 12; i++) {
+                dataset.addValue(totalIncomePerMonth[i + 1], "Income", months[i + 1]);
+                dataset.addValue(totalExpensePerMonth[i + 1], "Expense", months[i + 1]);
+            }
+        };
+        updateChartButton.addActionListener(updateChartAction);
+        showAllButton.addActionListener(showAllMonthsAction);
+
+        JFreeChart barChart = ChartFactory.createBarChart(
+                "Monthly Income and Expense",
+                "Month",
+                "Amount",
+                dataset
+        );
+        CategoryPlot plot = barChart.getCategoryPlot();
+        BarRenderer renderer = (BarRenderer) plot.getRenderer();
+        renderer.setSeriesPaint(0, Color.GREEN);
+        renderer.setSeriesPaint(1, Color.RED);
+
+        ChartPanel chartPanel = new ChartPanel(barChart);
+        chartDialog.add(chartPanel, BorderLayout.CENTER);
+
+        updateChartAction.actionPerformed(null);
+
+        chartDialog.setVisible(true);
+    }
+    private void updateChart(JPanel panel, String selectedMonth) {
+    	
+        // ลบ ChartPanel เดิมถ้ามีอยู่
+        if (panel.getComponentCount() > 1) {
+            panel.remove(1);
+        }
+        
+        // สร้างข้อมูลสำหรับกราฟ
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        String[] months = { "January", "February", "March", "April", "May", "June", "July", "August", "September",
+                "October", "November", "December" };
+        double[] totalIncomePerMonth = new double[12];
+        double[] totalExpensePerMonth = new double[12];
+        
+        // นับรายรับและรายจ่ายจากตาราง transactionTable
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            String type = (String) tableModel.getValueAt(i, 2);
+            String month = (String) tableModel.getValueAt(i, 1);
+            double money = (double) tableModel.getValueAt(i, 4);
+            
+            // หาตำแหน่งเดือนใน array months
+            int monthIndex = -1;
+            for (int j = 0; j < months.length; j++) {
+                if (months[j].equals(month)) {
+                    monthIndex = j;
+                    break;
+                }
+            }
+            
+            // ตรวจสอบรายรับหรือรายจ่ายและรวมยอดเงินตามเดือน
+            if (type.equals("Income")) {
+                totalIncomePerMonth[monthIndex] += money;
+            } else {
+                totalExpensePerMonth[monthIndex] += money;
+            }
+        }
+        
+        // เพิ่มข้อมูลลงใน dataset สำหรับกราฟตามเดือนที่เลือก
+        if (selectedMonth.equals("All")) {
+            for (int i = 0; i < 12; i++) {
+                dataset.addValue(totalIncomePerMonth[i], "Income", months[i]);
+                dataset.addValue(totalExpensePerMonth[i], "Expense", months[i]);
+            }
+        } else {
+        	
+            // หาตำแหน่งเดือนที่เลือก
+            int selectedMonthIndex = -1;
+            for (int i = 0; i < months.length; i++) {
+                if (months[i].equals(selectedMonth)) {
+                    selectedMonthIndex = i;
+                    break;
+                }
+            }
+            
+            // เพิ่มข้อมูลของเดือนที่เลือกลงใน dataset
+            dataset.addValue(totalIncomePerMonth[selectedMonthIndex], "Income", selectedMonth);
+            dataset.addValue(totalExpensePerMonth[selectedMonthIndex], "Expense", selectedMonth);
+        }
+        
+        // สร้างกราฟใหม่
+        JFreeChart barChart = ChartFactory.createBarChart(
+                "Income and Expense Chart for " + selectedMonth, // ชื่อกราฟ
+                "Month",                                        // ป้ายแกน X
+                "Amount",                                       // ป้ายแกน Y
+                dataset                                         // ข้อมูลกราฟ
+        );
+        
+        // ปรับแต่งการแสดงผลของกราฟ
+        CategoryPlot plot = barChart.getCategoryPlot();
+        BarRenderer renderer = (BarRenderer) plot.getRenderer();
+        renderer.setSeriesPaint(0, Color.GREEN); // เปลี่ยนสี Income เป็นสีเขียว
+        renderer.setSeriesPaint(1, Color.RED);   // เปลี่ยนสี Expense เป็นสีแดง
+
+        // สร้างแผงสำหรับกราฟ
+        ChartPanel chartPanel = new ChartPanel(barChart);
+        panel.add(chartPanel, BorderLayout.CENTER);
+        panel.revalidate(); // อัพเดตการแสดงผล
+    }
+
+
+	public void updateSummary() {
+		double totalIncome = 0;
+		double totalExpense = 0;
+		for (int i = 0; i < tableModel.getRowCount(); i++) {
+			String type = (String) tableModel.getValueAt(i, 2);
+			double amount = (double) tableModel.getValueAt(i, 4);
+
+			if (type.equals("Income")) {
+				totalIncome += amount;
+			} else
+				totalExpense += amount;
+
+		}
+		double balance = totalIncome - totalExpense;
+		balanceLabel.setText("Total Amount : " + balance);
+		totalExpenseLabel.setText("Total Expense : " + totalExpense);
+		totalIncomeLabel.setText("Total Income : " + totalIncome);
+		
+		//set Color Total amount
+		balanceLabel.setForeground(balance < 0 ? Color.RED : (balance > 0 ? Color.GREEN : Color.BLACK));
+
+	}
+	
+	
+
+	public static void main(String[] args) {
+		try {
+			// UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+			 //UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		new ExpenseTracker().setVisible(true);
+	}
+}
