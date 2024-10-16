@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.*;
 
 import org.jfree.chart.*;
+import org.jfree.chart.labels.StandardPieSectionLabelGenerator;
 import org.jfree.chart.plot.*;
 import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.data.category.*;
@@ -380,71 +381,71 @@ public class ExpenseTracker extends JFrame {
 		} catch (IOException e) {
 			JOptionPane.showMessageDialog(this, "Error importing data: ");
 		}
-
 	}
 
 	// Chart MOnth
 	public void showMonthlyChart() {
-	    JDialog chartDialog = new JDialog(this, "Monthly Expense Chart by Category", true);
-	    chartDialog.setSize(800, 600);
+	    JDialog chartDialog = new JDialog(this, "Monthly Income and Expense Chart by Category", true);
+	    chartDialog.setSize(900, 700);
 	    chartDialog.setLocationRelativeTo(this);
 	    
-	    // สร้าง JPanel สำหรับการเลือกเดือน
 	    JPanel selectionPanel = new JPanel(new FlowLayout());
 	    String[] months = { "All Months", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
 	    JComboBox<String> monthComboBox = new JComboBox<>(months);
 	    selectionPanel.add(new JLabel("Select Month:"));
 	    selectionPanel.add(monthComboBox);
 	    
-	    // เพิ่มปุ่มต่างๆ
 	    JButton updateChartButton = new JButton("Update Chart");
 	    selectionPanel.add(updateChartButton);
 	    chartDialog.add(selectionPanel, BorderLayout.NORTH);
 	    
-	    // สร้างข้อมูลสำหรับกราฟวงกลม
 	    DefaultPieDataset dataset = new DefaultPieDataset();
 	    
-	    // ActionListener สำหรับการอัพเดตกราฟตามเดือนที่เลือก
 	    updateChartButton.addActionListener(e -> {
-	        dataset.clear(); // ล้างข้อมูลเก่า
+	        dataset.clear();
 	        String selectedMonth = (String) monthComboBox.getSelectedItem();
 	        
-	        // เคลียร์ข้อมูลใน array
-	        Map<String, Double> categoryExpenses = new HashMap<>();
+	        Map<String, Double> categoryAmounts = new HashMap<>();
+	        double totalAmount = 0;
 	        
-	        // คำนวณรายจ่ายตามหมวดหมู่จาก transactionTable
 	        for (int i = 0; i < tableModel.getRowCount(); i++) {
 	            String type = (String) tableModel.getValueAt(i, 2);
 	            String month = (String) tableModel.getValueAt(i, 1);
 	            String category = (String) tableModel.getValueAt(i, 3);
 	            double money = (double) tableModel.getValueAt(i, 4);
 	            
-	            // ตรวจสอบว่าเป็นรายจ่าย และเดือนที่เลือก
-	            if (type.equals("Expense") && (selectedMonth.equals("All Months") || month.equals(selectedMonth))) {
-	                categoryExpenses.put(category, categoryExpenses.getOrDefault(category, 0.0) + money);
+	            if (selectedMonth.equals("All Months") || month.equals(selectedMonth)) {
+	                String key = type + ": " + category;
+	                categoryAmounts.put(key, categoryAmounts.getOrDefault(key, 0.0) + money);
+	                totalAmount += Math.abs(money);
 	            }
 	        }
 	        
-	        // เพิ่มข้อมูลหมวดหมู่และค่าใช้จ่ายลงใน dataset
-	        for (Map.Entry<String, Double> entry : categoryExpenses.entrySet()) {
-	            dataset.setValue(entry.getKey(), entry.getValue());
+	        for (Map.Entry<String, Double> entry : categoryAmounts.entrySet()) {
+	            double percentage = (Math.abs(entry.getValue()) / totalAmount) * 100;
+	            String label = String.format("%s (%.1f%%)", entry.getKey(), percentage);
+	            dataset.setValue(label, Math.abs(entry.getValue()));
 	        }
 	    });
 
-	    // สร้างกราฟวงกลม
 	    JFreeChart pieChart = ChartFactory.createPieChart(
-	        "Expense Breakdown by Category",
+	        "Income and Expense Breakdown by Category",
 	        dataset,
 	        true,
 	        true,
 	        false
 	    );
 	    
-	    // เพิ่ม ChartPanel ลงใน Dialog
+	    PiePlot plot = (PiePlot) pieChart.getPlot();
+	    plot.setLabelGenerator(new StandardPieSectionLabelGenerator("{0}: {1} ({2})"));
+	    
+	    // Set colors for income (green) and expenses (red)
+	    plot.setSectionPaint("Income", new Color(0, 150, 0));
+	    plot.setSectionPaint("Expense", new Color(150, 0, 0));
+	    
 	    ChartPanel chartPanel = new ChartPanel(pieChart);
 	    chartDialog.add(chartPanel, BorderLayout.CENTER);
 	    
-	    // แสดงกราฟ
 	    chartDialog.setVisible(true);
 	}
 
